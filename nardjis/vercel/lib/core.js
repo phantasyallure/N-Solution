@@ -152,7 +152,7 @@ function createHandler({ env, fetch: fetchFn }) {
     const headers = { apikey: sbKey };
     if (sbKey.startsWith("eyJ")) headers.Authorization = `Bearer ${sbKey}`;
     const r = await fetchFn(`${sbUrl}/rest/v1/${path}`, { headers });
-    if (!r.ok) throw new Error(`db ${r.status}`);
+    if (!r.ok) { const t = await r.text().catch(() => ""); throw new Error(`db ${r.status} ${t.slice(0, 200)}`); }
     return r.json();
   }
   const idOk = (id) => /^[\w-]{1,64}$/.test(id || "");
@@ -269,7 +269,7 @@ function createHandler({ env, fetch: fetchFn }) {
       return send(404, { error: "unknown op" });
     } catch (e) {
       console.error("[nardjis]", e && e.message);
-      return send(502, { error: "backend" });
+      return send(502, { error: "backend", detail: String((e && e.message) || e).slice(0, 300) });
     }
   };
 }
