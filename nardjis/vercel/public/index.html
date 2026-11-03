@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7A1535">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Nardjis Solutions</title>
+<link rel="icon" href="/static/favicon.png">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --rose:#B8325F; --burgundy:#7A1535; --gold:#C9A24B; --cyan:#1FC8DB; --navy:#1F3045;
+  --bg:#F6F3F2; --card:#fff; --line:#E8E2E0; --muted:#6F7B88; --free:#C9CFD6;
+  --serif:'Cormorant Garamond',Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--navy);font-size:14px;line-height:1.4}
+[hidden]{display:none!important}
+button,select,input{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+
+/* header */
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top)}
+.bar{max-width:1280px;margin:auto;padding:8px 16px;display:flex;align-items:center;gap:12px;min-height:60px}
+.home{display:flex;align-items:center;gap:10px;cursor:pointer;border:0;background:none;padding:0}
+.logo{height:44px;display:block}
+.brand{display:flex;flex-direction:column;line-height:1;font-family:var(--serif);text-align:start}
+.brand b{font-size:25px;letter-spacing:.04em}.brand span{font-size:14px;letter-spacing:.2em;margin-top:3px;font-weight:600}
+.sp{flex:1}
+.sw{border:1px solid var(--line);border-radius:10px;background:#fff;padding:9px 10px;min-height:42px;max-width:240px;min-width:0;flex:0 1 240px;font-weight:600}
+.lang{display:flex}
+.lang button{border:1px solid var(--line);background:#fff;font-size:12px;font-weight:600;padding:0 11px;min-height:42px;cursor:pointer}
+.lang button:first-child{border-radius:10px 0 0 10px}.lang button:last-child{border-radius:0 10px 10px 0}
+[dir=rtl] .lang button:first-child{border-radius:0 10px 10px 0}[dir=rtl] .lang button:last-child{border-radius:10px 0 0 10px}
+.lang button.on{background:var(--burgundy);color:#fff;border-color:var(--burgundy)}
+.icon-btn{border:1px solid var(--line);background:#fff;border-radius:10px;min-width:42px;min-height:42px;display:grid;place-items:center;cursor:pointer}
+.gold-line{height:3px;background:linear-gradient(90deg,var(--burgundy),var(--rose),var(--gold),var(--cyan))}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+main{max-width:1280px;margin:auto;padding:16px;display:grid;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+h2{font-family:var(--serif);font-size:21px;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2 small{font-family:Inter;font-size:11px;color:var(--muted);font-weight:500}
+h2 .grow{flex:1}
+.btn{border:0;background:var(--navy);color:#fff;border-radius:10px;padding:0 14px;min-height:42px;font-family:Inter,system-ui,sans-serif;font-weight:600;font-size:13px;cursor:pointer}
+main,.rv,.col,.grid>*{min-width:0}
+main,.rv{grid-template-columns:minmax(0,1fr)}
+.btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.btn.gold{background:linear-gradient(135deg,var(--gold),var(--rose));color:#fff}
+.btn:disabled{opacity:.5}
+.empty{color:var(--muted);font-size:13px;padding:6px 0}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi small{color:var(--muted);font-size:12px;display:block;margin-bottom:6px}
+.kpi b{font-family:var(--serif);font-size:34px;line-height:1}
+.kpi.a b{color:var(--burgundy)}.kpi.b b{color:var(--rose)}.kpi.c b{color:#A8841F}.kpi.d b{color:#0E8E9C}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px;align-items:start}
+.col{display:grid;gap:16px;min-width:0}
+
+/* restaurants overview */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.rc{display:block;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;transition:transform .15s,box-shadow .15s}
+.rc:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(31,48,69,.1)}
+.rc-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.rn{font-family:var(--serif);font-size:23px;font-weight:700;line-height:1.1}
+.rs{font-size:12px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);display:inline-block}
+.dot.demo{background:var(--gold)}.dot.off{background:var(--free)}
+.ring{--p:0;--c:var(--cyan);width:58px;height:58px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),#EEE9E7 0);display:grid;place-items:center;position:relative;flex:none}
+.ring::after{content:"";position:absolute;inset:6px;background:#fff;border-radius:50%}
+.ring b{position:relative;z-index:1;font-family:var(--serif);font-size:21px}
+.dots{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.dots i{width:22px;height:22px;border-radius:6px;background:var(--free)}
+.dots i.occupied,.dots i.waiting.ok{background:var(--cyan)}.dots i.waiting.warn{background:var(--gold)}
+.dots i.waiting.critical,.dots i.dirty.critical{background:var(--burgundy)}.dots i.dirty{background:var(--rose)}
+.rc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px dashed var(--line);padding-top:12px}
+.rc-stats b{display:block;font-family:var(--serif);font-size:22px;line-height:1.1}.rc-stats span{font-size:11px;color:var(--muted)}
+.rc-top-staff{margin-top:12px;font-size:12.5px;color:var(--muted)}.rc-top-staff b{color:var(--navy)}
+.rank{display:grid;gap:10px}
+.rank a{display:grid;grid-template-columns:26px 1fr 38px;gap:10px;align-items:center}
+.rank .no{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--gold)}
+.rank .bar2{height:7px;border-radius:9px;background:#EEE9E7;overflow:hidden;margin-top:4px}.rank .bar2 i{display:block;height:100%;border-radius:9px}
+.rank b.sc{text-align:end}
+
+/* room */
+.tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.t{border:1px solid var(--line);border-radius:12px;padding:12px;position:relative;overflow:hidden}
+.t::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--free)}
+[dir=rtl] .t::before{inset:0 0 0 auto}
+.t.occupied::before,.t.waiting.ok::before{background:var(--cyan)}
+.t.waiting.warn::before{background:var(--gold)}.t.waiting.critical::before,.t.dirty.critical::before{background:var(--burgundy)}
+.t.dirty::before{background:var(--rose)}
+.t.critical{box-shadow:0 0 0 2px rgba(122,21,53,.18)}
+.t .n{font-weight:600;padding-inline-end:70px}.t .s{font-size:11px;color:var(--muted);margin-top:2px;min-height:14px}
+.t .time{font-family:var(--serif);font-size:30px;font-weight:700;margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.meter{height:7px;border-radius:9px;background:#EEE9E7;overflow:hidden}
+.meter i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--cyan),var(--gold) 55%,var(--burgundy));background-size:200px 100%;transition:width .8s}
+.badge{position:absolute;top:10px;inset-inline-end:10px;font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:99px;background:#F0ECEA;color:var(--muted)}
+.badge.waiting{background:rgba(201,162,75,.2);color:#8A6A1F}.badge.dirty{background:rgba(184,50,95,.14);color:var(--rose)}
+.badge.occupied{background:rgba(31,200,219,.15);color:#0E8E9C}
+.plan{width:100%;max-height:300px;border-radius:10px;background:#FBF9F8;border:1px solid var(--line);margin-bottom:14px;display:block}
+.live img{width:100%;border-radius:10px;display:block}
+
+/* team / feed */
+.staff{display:grid;gap:12px}
+.st{display:grid;grid-template-columns:36px 1fr;gap:10px;align-items:center}
+.av{width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:600;position:relative}
+.av.top{background:linear-gradient(135deg,var(--gold),var(--burgundy))}
+.av::after{content:"";position:absolute;inset-inline-end:-1px;bottom:-1px;width:11px;height:11px;border-radius:50%;border:2px solid #fff;background:var(--free)}
+.av.ready::after{background:var(--cyan)}.av.active::after{background:var(--gold)}
+.st .row{display:flex;justify-content:space-between;font-weight:600}
+.st .meta{font-size:11.5px;color:var(--muted);margin-top:3px}
+.eff{height:6px;background:#EEE9E7;border-radius:9px;margin-top:5px;overflow:hidden}
+.eff i{display:block;height:100%;background:linear-gradient(90deg,var(--rose),var(--burgundy));transition:width .8s}
+.feed{display:grid;gap:8px;max-height:340px;overflow:auto}
+.ev{font-size:12.5px;padding:8px 10px;border-radius:9px;background:#F8F5F4;border-inline-start:3px solid var(--free)}
+.ev.staff{border-color:var(--gold)}.ev.manager{border-color:var(--burgundy);background:rgba(122,21,53,.06)}.ev.ok{border-color:var(--cyan)}
+.wl{display:grid;gap:7px}
+.wl div{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding-bottom:7px;border-bottom:1px dashed var(--line)}
+.wl .ab{color:var(--burgundy);font-weight:600}
+
+/* AI chat */
+.ai h2 .spark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--rose));display:grid;place-items:center;color:#fff}
+.ai h2 .spark svg{width:16px;height:16px}
+.msgs{display:grid;gap:10px;max-height:380px;overflow:auto;margin-bottom:12px;padding:2px}
+.msg{padding:10px 12px;border-radius:14px;max-width:92%;font-size:14px;line-height:1.5;word-wrap:break-word}
+.msg.u{background:var(--navy);color:#fff;justify-self:end;border-end-end-radius:4px}
+.msg.a{background:#F8F5F4;border:1px solid var(--line);justify-self:start;border-end-start-radius:4px}
+.msg.err{background:rgba(122,21,53,.07);border-color:rgba(122,21,53,.25);color:var(--burgundy)}
+.msg.typing{color:var(--muted);font-style:italic}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:8px 12px;font-size:12.5px;cursor:pointer;min-height:36px}
+.chip:active{background:#F3EEEC}
+.ask{display:flex;gap:8px}
+.ask input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:0 12px;min-height:46px;font-size:16px;background:#fff}
+.hint{font-size:12.5px;color:#8A6A1F;background:rgba(201,162,75,.14);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+
+/* login + modal */
+.login{max-width:360px;margin:8vh auto;text-align:center;display:grid;gap:12px;justify-items:center}
+.login img{width:92px}.login input{width:100%;border:1px solid var(--line);border-radius:10px;padding:0 12px;min-height:48px;font-size:16px;text-align:center}
+.login .err{color:var(--burgundy);font-size:13px;min-height:18px}
+dialog{border:none;border-radius:14px;padding:22px;max-width:420px;width:92%;box-shadow:0 20px 60px rgba(31,48,69,.3)}
+dialog::backdrop{background:rgba(31,48,69,.45)}
+dialog pre{white-space:pre-wrap;font:inherit;line-height:1.7;margin-bottom:14px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:6px 0 26px;letter-spacing:.14em;text-transform:uppercase}
+
+/* mobile bottom bar */
+#tabs{display:none}
+@media(max-width:900px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi b{font-size:30px}
+  .bar{padding:8px 12px;gap:8px}
+  .brand{display:none}
+  .sw{flex:1;max-width:none}
+  .lang button{padding:0 9px}
+  main{padding:12px;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  .card{padding:14px}
+  .tables{grid-template-columns:repeat(2,1fr);gap:10px}
+  .t .time{font-size:27px}
+  .rv [data-tab]{display:none}
+  .rv[data-active=room] [data-tab=room],.rv[data-active=team] [data-tab=team],
+  .rv[data-active=feed] [data-tab=feed],.rv[data-active=ai] [data-tab=ai]{display:block}
+  .rv[data-active=room] .kpis[data-tab]{display:grid}
+  .rv .grid{display:block}.rv .col{display:contents}
+  .rv>*,.rv .col>*{margin-bottom:12px}
+  #tabs.show{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;bottom:0;inset-inline:0;background:#fff;border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:30}
+  #tabs button{border:0;background:none;display:grid;justify-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--muted);min-height:50px;border-radius:10px;cursor:pointer}
+  #tabs button.on{color:var(--burgundy);background:rgba(122,21,53,.07)}
+  footer{display:none}
+}
+@media(max-width:380px){.lang button{padding:0 7px}.kpi small{font-size:11px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <button class="home" id="homeBtn" aria-label="Home"><img class="logo" src="/static/emblem.png" alt=""><div class="brand"><b>NARDJIS</b><span>SOLUTIONS</span></div></button>
+    <div class="sp" id="sp"></div>
+    <select class="sw" id="sw" hidden></select>
+    <div class="lang" id="lang"><button data-l="fr">FR</button><button data-l="en">EN</button><button data-l="ar">عربي</button></div>
+    <button class="icon-btn" id="out" hidden aria-label="Logout"><svg class="i" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg></button>
+  </div>
+  <div class="gold-line"></div>
+</header>
+
+<div id="app"></div>
+<nav id="tabs"></nav>
+<dialog id="dlg"><pre id="rtxt"></pre><button class="btn" onclick="dlg.close()">OK</button></dialog>
+
+<script>
+const ICON = {
+  home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  room:'<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',
+  team:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.5 2.7-5.5 6-5.5s6 2 6 5.5M15 14.8c3.2-.4 6 1.2 6 4.7"/>',
+  feed:'<path d="M6 9a6 6 0 1 1 12 0c0 6 2 7 2 7H4s2-1 2-7zM10 20a2 2 0 0 0 4 0"/>',
+  ai:'<path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/>'
+};
+const ico = n => `<svg class="i" viewBox="0 0 24 24">${ICON[n]}</svg>`;
+
+const I = {
+ fr:{lang:"fr",all:"tous",group:"Groupe",all_rest:"Tous les restaurants",
+  k_rest:"Restaurants en ligne",k_attention:"Tables à surveiller",k_longest:"Plus longue attente",k_avg:"Attente moyenne",k_alerts:"Alertes envoyées",k_lost:"Partis sans service",
+  h_overview:"Vos restaurants",h_rank:"Classement",h_best:"Meilleurs employés",h_room:"Salle en direct",h_staff:"Effort de l’équipe",h_waits:"Attentes les plus longues",h_alerts:"Activité",h_live:"Caméra",blurred:"visages floutés",
+  free:"Libre",occupied:"Servi",waiting:"En attente",dirty:"À nettoyer",clients:"clients",rep:"Rapport",
+  ready:"Disponible",active:"En mission",away:"Absent",visits:"visites",done:"tâches",resp:"réponse moy.",
+  abandoned:"parti sans service",served:"servi",none:"Rien pour l’instant",demo:"DÉMO ×",live:"EN DIRECT",offline:"Hors ligne",starting:"Démarrage…",
+  health:"santé",attn:"à surveiller",avgw:"attente moy.",alerts:"alertes",star:"Meilleur effort",
+  tab_home:"Groupe",tab_room:"Salle",tab_team:"Équipe",tab_feed:"Activité",tab_ai:"IA",
+  ai_title:"Assistant IA",ai_ph:"Posez une question…",ai_send:"Envoyer",ai_brief:"Briefing du jour",ai_think:"Réflexion…",
+  chips:["Quelle table attend le plus ?","Qui a le meilleur effort ?","Comment améliorer le service ?"],
+  chips_all:["Quel restaurant a le plus de problèmes ?","Compare mes restaurants","Que faire demain ?"],
+  err_no_key:"Gemini n’est pas encore configuré. Créez une clé gratuite sur aistudio.google.com/apikey puis lancez avec GEMINI_API_KEY.",
+  err_quota:"Quota gratuit atteint. Réessayez dans une minute.",err_failed:"L’IA est indisponible pour le moment.",err_busy:"Trop de questions, patientez un instant.",err_data:"Pas encore de données.",
+  not_cfg:"Dashboard non protégé : ajoutez la variable ACCESS_CODE dans Vercel (Settings → Environment Variables), puis redéployez.",
+  code:"Code d’accès",enter:"Entrer",bad_code:"Code incorrect",too_many:"Trop d’essais, patientez une minute.",
+  e:{seated:"{t} : nouveaux clients",served:"{t} : servi par {s} après {m}",left:"{t} : clients partis",cleaned:"{t} : nettoyée par {s}",
+  task_wait:"{t} : attente {m} → {s}",task_dirty:"{t} : à nettoyer depuis {m} → {s}",escalate_wait:"{t} : attente critique ({m}) — manager",
+  escalate_dirty:"{t} : non nettoyée ({m}) — manager",left_unserved:"{t} : client parti sans service ({m})",revisit:"{t} : client attend à nouveau"}},
+ en:{lang:"en",all:"everyone",group:"Group",all_rest:"All restaurants",
+  k_rest:"Restaurants online",k_attention:"Tables needing attention",k_longest:"Longest wait",k_avg:"Average wait",k_alerts:"Alerts sent",k_lost:"Left unserved",
+  h_overview:"Your restaurants",h_rank:"Ranking",h_best:"Top employees",h_room:"Live room",h_staff:"Team effort",h_waits:"Longest waits",h_alerts:"Activity",h_live:"Camera",blurred:"faces blurred",
+  free:"Free",occupied:"Served",waiting:"Waiting",dirty:"Needs cleaning",clients:"guests",rep:"Report",
+  ready:"Available",active:"On a task",away:"Away",visits:"visits",done:"tasks",resp:"avg response",
+  abandoned:"left unserved",served:"served",none:"Nothing yet",demo:"DEMO ×",live:"LIVE",offline:"Offline",starting:"Starting…",
+  health:"health",attn:"to watch",avgw:"avg wait",alerts:"alerts",star:"Top effort",
+  tab_home:"Group",tab_room:"Room",tab_team:"Team",tab_feed:"Activity",tab_ai:"AI",
+  ai_title:"AI assistant",ai_ph:"Ask a question…",ai_send:"Send",ai_brief:"Daily briefing",ai_think:"Thinking…",
+  chips:["Which table waits the longest?","Who has the best effort?","How can I improve service?"],
+  chips_all:["Which restaurant has the most problems?","Compare my restaurants","What should I do tomorrow?"],
+  err_no_key:"Gemini is not set up yet. Create a free key at aistudio.google.com/apikey and start with GEMINI_API_KEY.",
+  err_quota:"Free quota reached. Try again in a minute.",err_failed:"The AI is unavailable right now.",err_busy:"Too many questions, please wait a moment.",err_data:"No data yet.",
+  not_cfg:"Dashboard not protected yet: add the ACCESS_CODE variable in Vercel (Settings → Environment Variables), then redeploy.",
+  code:"Access code",enter:"Enter",bad_code:"Wrong code",too_many:"Too many attempts, wait a minute.",
+  e:{seated:"{t}: new guests",served:"{t}: served by {s} after {m}",left:"{t}: guests left",cleaned:"{t}: cleaned by {s}",
+  task_wait:"{t}: waiting {m} → {s}",task_dirty:"{t}: needs cleaning for {m} → {s}",escalate_wait:"{t}: critical wait ({m}) — manager",
+  escalate_dirty:"{t}: not cleaned ({m}) — manager",left_unserved:"{t}: guest left unserved ({m})",revisit:"{t}: guest waiting again"}},
+ ar:{lang:"ar",all:"الجميع",group:"المجموعة",all_rest:"كل المطاعم",
+  k_rest:"مطاعم متصلة",k_attention:"طاولات تحتاج انتباه",k_longest:"أطول انتظار",k_avg:"متوسط الانتظار",k_alerts:"التنبيهات المرسلة",k_lost:"غادروا دون خدمة",
+  h_overview:"مطاعمك",h_rank:"الترتيب",h_best:"أفضل الموظفين",h_room:"القاعة مباشرة",h_staff:"مجهود الفريق",h_waits:"أطول فترات الانتظار",h_alerts:"النشاط",h_live:"الكاميرا",blurred:"الوجوه مموّهة",
+  free:"فارغة",occupied:"تمت الخدمة",waiting:"في الانتظار",dirty:"تحتاج تنظيف",clients:"زبائن",rep:"تقرير",
+  ready:"متاح",active:"في مهمة",away:"غائب",visits:"زيارات",done:"مهام",resp:"متوسط الاستجابة",
+  abandoned:"غادر دون خدمة",served:"تمت خدمته",none:"لا شيء بعد",demo:"تجريبي ×",live:"مباشر",offline:"غير متصل",starting:"جارٍ التشغيل…",
+  health:"الحالة",attn:"للمراقبة",avgw:"متوسط الانتظار",alerts:"تنبيهات",star:"أفضل مجهود",
+  tab_home:"المجموعة",tab_room:"القاعة",tab_team:"الفريق",tab_feed:"النشاط",tab_ai:"الذكاء",
+  ai_title:"المساعد الذكي",ai_ph:"اطرح سؤالاً…",ai_send:"إرسال",ai_brief:"ملخص اليوم",ai_think:"جارٍ التفكير…",
+  chips:["أي طاولة تنتظر أكثر؟","من لديه أفضل مجهود؟","كيف أحسّن الخدمة؟"],
+  chips_all:["أي مطعم لديه مشاكل أكثر؟","قارن بين مطاعمي","ماذا أفعل غداً؟"],
+  err_no_key:"Gemini غير مُعدّ بعد. أنشئ مفتاحاً مجانياً من aistudio.google.com/apikey ثم شغّل مع GEMINI_API_KEY.",
+  err_quota:"انتهت الحصة المجانية. حاول بعد دقيقة.",err_failed:"المساعد غير متاح حالياً.",err_busy:"أسئلة كثيرة، انتظر قليلاً.",err_data:"لا توجد بيانات بعد.",
+  not_cfg:"لوحة التحكم غير محمية بعد: أضف المتغير ACCESS_CODE في Vercel (Settings → Environment Variables) ثم أعد النشر.",
+  code:"رمز الدخول",enter:"دخول",bad_code:"رمز خاطئ",too_many:"محاولات كثيرة، انتظر دقيقة.",
+  e:{seated:"{t}: زبائن جدد",served:"{t}: خدمه {s} بعد {m}",left:"{t}: غادر الزبائن",cleaned:"{t}: نظّفها {s}",
+  task_wait:"{t}: انتظار {m} ← {s}",task_dirty:"{t}: تحتاج تنظيف منذ {m} ← {s}",escalate_wait:"{t}: انتظار حرج ({m}) — المدير",
+  escalate_dirty:"{t}: غير منظفة ({m}) — المدير",left_unserved:"{t}: زبون غادر دون خدمة ({m})",revisit:"{t}: زبون ينتظر مجدداً"}}
+};
+let L = localStorage.getItem("nl") || "fr", O = null, R = null, route = {v:"home"}, needCode = false, authed = false, tab = "room";
+const chats = {};           // scope -> [{r:"u"|"a"|"err", t}]
+const $ = id => document.getElementById(id);
+const A = (op, q) => "/api?" + new URLSearchParams({op, ...(q || {})});   // same contract: local server and Vercel
+const T = () => I[L];
+const mm = s => { s = Math.max(0, Math.round(s)); return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0"); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const col = {ok:"#1FC8DB",warn:"#C9A24B",critical:"#7A1535"};
+const stateCol = t => t.state==="dirty" ? (t.level==="critical"?"#7A1535":"#B8325F") : t.state==="waiting" ? col[t.level] : t.state==="occupied" ? "#1FC8DB" : "#C9CFD6";
+const hcol = h => h>=80 ? "#1FC8DB" : h>=55 ? "#C9A24B" : "#7A1535";
+const md = s => esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/^[\-\*] /gm,"• ").replace(/\n/g,"<br>");
+
+async function api(path, opt){
+  const r = await fetch(path, opt);
+  if (r.status === 401 && !path.includes("op=login")) { authed = false; showLogin(); throw new Error("auth"); }
+  return r;
+}
+
+/* ---------------- header / language ---------------- */
+function setLang(l){
+  L = l; localStorage.setItem("nl", l);
+  document.documentElement.lang = l; document.documentElement.dir = l==="ar" ? "rtl" : "ltr";
+  document.querySelectorAll("#lang button").forEach(b => b.classList.toggle("on", b.dataset.l===l));
+  if (authed) { buildHeaderSwitch(); mount(); }
+}
+document.querySelectorAll("#lang button").forEach(b => b.onclick = () => setLang(b.dataset.l));
+$("homeBtn").onclick = () => { location.hash = "#/"; };
+$("out").onclick = async () => { await fetch(A("logout"), {method:"POST"}); authed = false; showLogin(); };
+$("sw").onchange = e => { location.hash = e.target.value ? "#/r/" + e.target.value : "#/"; };
+window.dlg = $("dlg");
+
+function buildHeaderSwitch(){
+  const sw = $("sw"); if (!O) return;
+  sw.innerHTML = `<option value="">${esc(T().all_rest)}</option>` + O.restaurants.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join("");
+  sw.value = route.v==="rest" ? route.id : "";
+  sw.hidden = O.restaurants.length < 2 && route.v==="home";
+  $("sp").hidden = !sw.hidden;
+}
+
+/* ---------------- login ---------------- */
+function showLogin(notConfigured){
+  $("tabs").classList.remove("show"); $("sw").hidden = true; $("out").hidden = true;
+  if (notConfigured) { $("app").innerHTML = `<main><div class="login card"><img src="/static/emblem.png" alt=""><h2 style="margin:0">Nardjis Solutions</h2><div class="hint" style="text-align:start">${esc(T().not_cfg)}</div></div></main>`; return; }
+  $("app").innerHTML = `<main><div class="login card"><img src="/static/emblem.png" alt="">
+    <h2 style="margin:0">Nardjis Solutions</h2>
+    <input id="code" type="password" autocomplete="current-password" placeholder="${esc(T().code)}">
+    <div class="err" id="lerr"></div><button class="btn" id="lbtn" style="width:100%">${esc(T().enter)}</button></div></main>`;
+  const go = async () => {
+    const r = await fetch(A("login"), {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({code:$("code").value})});
+    if (r.ok) { authed = true; start(); } else $("lerr").textContent = r.status===429 ? T().too_many : T().bad_code;
+  };
+  $("lbtn").onclick = go; $("code").onkeydown = e => { if (e.key==="Enter") go(); };
+  $("code").focus();
+}
+
+/* ---------------- AI chat ---------------- */
+function chatHTML(scope){
+  const t = T(), list = chats[scope] || [], chips = scope==="all" ? t.chips_all : t.chips;
+  return `<div class="card ai" data-tab="ai"><h2><span class="spark">${ico("ai")}</span>${esc(t.ai_title)}<span class="grow"></span>
+      <button class="btn gold" id="brief" ${O&&O.ai?"":"disabled"}>${esc(t.ai_brief)}</button></h2>
+    ${O&&!O.ai ? `<div class="hint">${esc(t.err_no_key)}</div>` : ""}
+    <div class="msgs" id="msgs">${list.map(m => `<div class="msg ${m.r==="u"?"u":"a"} ${m.r==="err"?"err":""}">${md(m.t)}</div>`).join("")}</div>
+    <div class="chips">${chips.map(c => `<button class="chip" ${O&&O.ai?"":"disabled"}>${esc(c)}</button>`).join("")}</div>
+    <form class="ask" id="askf"><input id="q" placeholder="${esc(t.ai_ph)}" ${O&&O.ai?"":"disabled"} autocomplete="off" enterkeyhint="send"><button class="btn" ${O&&O.ai?"":"disabled"}>${esc(t.ai_send)}</button></form></div>`;
+}
+function wireChat(scope){
+  const msgs = $("msgs"); if (!msgs) return;
+  msgs.scrollTop = msgs.scrollHeight;
+  const push = (r, t) => { (chats[scope] = chats[scope] || []).push({r, t}); msgs.insertAdjacentHTML("beforeend", `<div class="msg ${r==="u"?"u":"a"} ${r==="err"?"err":""}">${md(t)}</div>`); msgs.scrollTop = msgs.scrollHeight; };
+  const call = async (path, body, shown) => {
+    if (shown) push("u", shown);
+    msgs.insertAdjacentHTML("beforeend", `<div class="msg a typing" id="typing">${esc(T().ai_think)}</div>`); msgs.scrollTop = msgs.scrollHeight;
+    let out;
+    try {
+      const r = await api(path, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({...body, restaurant:scope, lang:L})});
+      const j = await r.json().catch(() => ({}));
+      out = r.ok ? ["a", j.answer] : ["err", T()["err_" + ({no_key:"no_key",quota:"quota",busy:"busy"}[j.error] || (r.status===503 ? "data" : "failed"))]];
+    } catch(e) { out = ["err", T().err_failed]; }
+    $("typing")?.remove(); push(...out);
+  };
+  $("askf").onsubmit = e => { e.preventDefault(); const q = $("q").value.trim(); if (!q) return; $("q").value = ""; call(A("ask"), {question:q}, q); };
+  $("brief").onclick = () => call(A("insights"), {}, "✨ " + T().ai_brief);
+  document.querySelectorAll(".chip").forEach(c => c.onclick = () => call(A("ask"), {question:c.textContent}, c.textContent));
+}
+
+/* ---------------- routing ---------------- */
+function parseRoute(){
+  const m = location.hash.match(/^#\/r\/([\w-]+)/);
+  route = m ? {v:"rest", id:m[1]} : {v:"home"};
+}
+window.onhashchange = () => { parseRoute(); R = null; mount(); tick(); };
+
+function mount(){
+  if (!authed) return;
+  const t = T();
+  buildHeaderSwitch();
+  const tabs = $("tabs");
+  if (route.v === "home") {
+    tabs.classList.remove("show");
+    $("app").innerHTML = `<main>
+      <section class="kpis" id="gk"></section>
+      <div><h2>${esc(t.h_overview)}</h2><div class="rgrid" id="rgrid"></div></div>
+      <div class="grid"><div class="card"><h2>${esc(t.h_rank)}</h2><div class="rank" id="rank"></div></div>
+        <div class="card"><h2>${esc(t.h_best)}</h2><div class="staff" id="gstaff"></div></div></div>
+      ${chatHTML("all").replace('data-tab="ai"','')}
+    </main><footer>Innovate · Optimize · Scale</footer>`;
+    wireChat("all"); if (O) renderHome();
+  } else {
+    tabs.classList.add("show");
+    tabs.innerHTML = [["home","tab_home"],["room","tab_room"],["team","tab_team"],["feed","tab_feed"],["ai","tab_ai"]]
+      .map(([k,l]) => `<button data-k="${k}" class="${k===tab?"on":""}">${ico(k)}<span>${esc(t[l])}</span></button>`).join("");
+    tabs.querySelectorAll("button").forEach(b => b.onclick = () => { if (b.dataset.k==="home") location.hash = "#/"; else setTab(b.dataset.k); });
+    $("app").innerHTML = `<main><div class="rv" id="rv" data-active="${tab}" style="display:grid;gap:16px">
+      <section class="kpis" data-tab="room" id="k"></section>
+      <section class="grid">
+        <div class="col">
+          <div class="card" data-tab="room"><h2><span id="rname"></span><small id="rmode"></small><span class="grow"></span><button class="btn ghost" id="rep">${esc(t.rep)}</button></h2>
+            <svg class="plan" id="plan" viewBox="0 0 100 62" preserveAspectRatio="xMidYMid meet"></svg><div class="tables" id="tables"></div></div>
+          <div class="card live" data-tab="room" id="livecard" hidden><h2>${esc(t.h_live)}<small>${esc(t.blurred)}</small></h2><img id="live" alt=""></div>
+        </div>
+        <div class="col">
+          <div class="card" data-tab="team"><h2>${esc(t.h_staff)}</h2><div class="staff" id="staff"></div></div>
+          <div class="card" data-tab="team"><h2>${esc(t.h_waits)}</h2><div class="wl" id="waits"></div></div>
+          <div class="card" data-tab="feed"><h2>${esc(t.h_alerts)}</h2><div class="feed" id="feed"></div></div>
+          ${chatHTML(route.id)}
+        </div>
+      </section></div></main>`;
+    $("rep").onclick = async () => { $("rtxt").textContent = await (await api(A("report", {id:route.id, lang:L}))).text(); dlg.showModal(); };
+    wireChat(route.id); if (R) renderRest();
+  }
+}
+function setTab(k){ tab = k; $("rv").dataset.active = k; document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.k===k)); scrollTo(0,0); }
+
+/* ---------------- renderers ---------------- */
+function modeLabel(r){ const t = T(); return !r.online ? t.offline : r.mode==="demo" ? t.demo + r.speed : t.live; }
+function renderHome(){
+  const t = T(), g = O.group;
+  $("gk").innerHTML = [["a",t.k_rest,g.online+"/"+g.count],["b",t.k_attention,g.attention],["c",t.k_avg,g.avg_wait==null?"–":mm(g.avg_wait)],["d",t.k_alerts,g.alerts]]
+    .map(([c,l,v]) => `<div class="card kpi ${c}"><small>${esc(l)}</small><b>${v}</b></div>`).join("");
+  $("rgrid").innerHTML = O.restaurants.map(r => {
+    if (r.starting) return `<div class="rc"><div class="rn">${esc(r.name)}</div><div class="rs">${esc(t.starting)}</div></div>`;
+    return `<a class="rc" href="#/r/${r.id}">
+      <div class="rc-top"><div><div class="rn">${esc(r.name)}</div><div class="rs"><span class="dot ${!r.online?"off":r.mode==="demo"?"demo":""}"></span>${esc(modeLabel(r))}</div></div>
+        <div class="ring" style="--p:${r.health};--c:${hcol(r.health)}"><b>${r.health}</b></div></div>
+      <div class="dots">${r.tables.map(x => `<i class="${x.state} ${x.level}"></i>`).join("")}</div>
+      <div class="rc-stats"><div><b style="color:${r.kpi.attention?"#7A1535":"inherit"}">${r.kpi.attention}</b><span>${esc(t.attn)}</span></div>
+        <div><b>${r.kpi.avg_wait==null?"–":mm(r.kpi.avg_wait)}</b><span>${esc(t.avgw)}</span></div>
+        <div><b>${r.kpi.alerts}</b><span>${esc(t.alerts)}</span></div></div>
+      ${r.top ? `<div class="rc-top-staff">★ ${esc(t.star)} : <b>${esc(r.top.name)}</b></div>` : ""}</a>`;
+  }).join("");
+  const rk = O.restaurants.filter(r => r.health != null).sort((a,b) => b.health - a.health);
+  $("rank").innerHTML = rk.map((r,i) => `<a href="#/r/${r.id}"><span class="no">${i+1}</span><div><div style="font-weight:600">${esc(r.name)}</div><div class="bar2"><i style="width:${r.health}%;background:${hcol(r.health)}"></i></div></div><b class="sc">${r.health}</b></a>`).join("") || `<div class="empty">${esc(t.none)}</div>`;
+  const mx = Math.max(1, ...g.top_staff.map(s => s.effort));
+  $("gstaff").innerHTML = g.top_staff.length ? g.top_staff.map((s,i) => `<div class="st"><div class="av ${i===0?"top":""}">${esc(s.name[0])}</div>
+    <div><div class="row"><span>${esc(s.name)}${i===0?" ★":""}</span><span style="color:var(--muted);font-weight:500;font-size:12px">${esc(s.restaurant)}</span></div><div class="eff"><i style="width:${100*s.effort/mx}%"></i></div></div></div>`).join("") : `<div class="empty">${esc(t.none)}</div>`;
+}
+
+function evText(e){
+  const t = T().e[e.type]; if (!t) return null;
+  return esc(t.replace("{t}", e.table).replace("{s}", e.staff || T().all).replace("{m}", mm(e.seconds)));
+}
+function renderRest(){
+  const t = T(), m = R.meta || {}, sm = O && O.restaurants.find(r => r.id===route.id);
+  $("rname").textContent = m.restaurant || "";
+  $("rmode").innerHTML = `<span class="dot ${sm && !sm.online ? "off" : m.mode==="demo"?"demo":""}"></span> ${esc(sm ? modeLabel(sm) : "")}`;
+  const kp = [["a",t.k_attention,R.kpi.attention],["b",t.k_longest,mm(R.kpi.longest_wait_now)],["c",t.k_avg,R.kpi.avg_wait==null?"–":mm(R.kpi.avg_wait)],["d",t.k_alerts,R.kpi.alerts]];
+  $("k").innerHTML = kp.map(([c,l,v]) => `<div class="card kpi ${c}"><small>${esc(l)}</small><b>${v}</b></div>`).join("");
+  $("tables").innerHTML = R.tables.map(x => {
+    const sec = x.state==="waiting" ? x.wait : x.state==="dirty" ? x.dirty : x.state==="occupied" ? x.seated : 0;
+    const pct = x.state==="waiting" ? Math.min(x.patience,1)*100 : x.state==="dirty" ? Math.min(x.dirty/(2*(m.dirty_after||120)),1)*100 : 0;
+    return `<div class="t ${x.state} ${x.level}"><div class="badge ${x.state}">${esc(t[x.state])}</div><div class="n">${esc(x.name)}</div>
+      <div class="s">${x.clients ? x.clients+" "+esc(t.clients) : ""}</div>
+      <div class="time" style="color:${x.state==="free"?"#B5BCC4":stateCol(x)}">${x.state==="free" ? "—" : mm(sec)}</div>
+      <div class="meter"><i style="width:${pct}%"></i></div></div>`;
+  }).join("");
+  let svg = "";
+  R.tables.forEach(x => {
+    const pts = x.polygon.map(p => (p[0]*100)+","+(p[1]*62)).join(" ");
+    svg += `<polygon points="${pts}" fill="${stateCol(x)}" fill-opacity="${x.state==="free"?.14:.22}" stroke="${stateCol(x)}" stroke-width=".5"/>
+      <text x="${x.center[0]*100}" y="${x.center[1]*62}" font-size="2.4" text-anchor="middle" dominant-baseline="middle" fill="#1F3045" font-weight="600">${esc(x.name)}</text>`;
+  });
+  R.staff.forEach((s,i) => { if (!s.pos || s.status==="away") return;
+    svg += `<g style="transform:translate(${s.pos[0]*100}px,${s.pos[1]*62}px);transition:transform .6s linear"><circle r="2.6" fill="${i===0&&s.effort>0?"#B8325F":"#1F3045"}" stroke="#fff" stroke-width=".5"/>
+      <text y=".1" font-size="2.6" fill="#fff" text-anchor="middle" dominant-baseline="middle" font-weight="600">${esc(s.name[0])}</text></g>`; });
+  $("plan").innerHTML = svg;
+  const mx = Math.max(1, ...R.staff.map(s => s.effort));
+  $("staff").innerHTML = R.staff.length ? R.staff.map((s,i) => `<div class="st"><div class="av ${s.status} ${i===0&&s.effort>0?"top":""}">${esc(s.name[0])}</div>
+    <div><div class="row"><span>${esc(s.name)}${i===0&&s.effort>0?" ★":""}</span><span>${Math.round(100*s.effort/mx)}</span></div><div class="eff"><i style="width:${100*s.effort/mx}%"></i></div>
+    <div class="meta">${esc(t[s.status])} · ${s.visits} ${esc(t.visits)} · ${s.tasks_done} ${esc(t.done)} · ${s.distance_m} m${s.avg_response!=null?" · "+esc(t.resp)+" "+mm(s.avg_response):""}</div></div></div>`).join("") : `<div class="empty">${esc(t.none)}</div>`;
+  const w = [...R.waits].sort((a,b) => b.seconds-a.seconds).slice(0,6);
+  $("waits").innerHTML = w.length ? w.map(x => `<div class="${x.kind==="abandoned"?"ab":""}"><span>${esc(x.table)} · ${esc(x.kind==="abandoned"?t.abandoned:(x.staff||t.served))}</span><b>${mm(x.seconds)}</b></div>`).join("") : `<div class="empty">${esc(t.none)}</div>`;
+  const f = [...R.events].reverse().map(e => ({e, t:evText(e)})).filter(x => x.t).slice(0,14);
+  $("feed").innerHTML = f.length ? f.map(({e,t}) => `<div class="ev ${e.notify || (e.type==="served"||e.type==="cleaned"?"ok":"")}">${t}</div>`).join("") : `<div class="empty">${esc(t.none)}</div>`;
+  if (m.mode==="live") { $("livecard").hidden = false; const im = $("live"); im.onerror = () => { $("livecard").hidden = true; }; im.src = A("live", {id:route.id, t:Date.now()}); }
+}
+
+async function tick(){
+  if (!authed) return;
+  try {
+    O = await (await api(A("overview"))).json();
+    if ($("sw").options.length !== O.restaurants.length + 1) buildHeaderSwitch();
+    if (route.v === "home") { if ($("rgrid")) renderHome(); }
+    else {
+      const s = await (await api(A("state", {id:route.id}))).json();
+      if (s.waiting === undefined && $("tables")) { R = s; renderRest(); }
+    }
+  } catch(e) {}
+}
+
+async function start(){
+  $("out").hidden = !needCode;
+  parseRoute();
+  try { O = await (await api(A("overview"))).json(); } catch(e) { return; }
+  mount(); tick();
+}
+(async () => {
+  setLang(L);
+  const a = await (await fetch(A("auth"))).json();
+  needCode = a.required; authed = a.ok;
+  authed ? start() : showLogin(a.configured === false);
+  setInterval(() => { if (!document.hidden) tick(); }, 2500);   // pauses in background tabs (saves data on the free tier)
+})();
+</script>
+</body>
+</html>
