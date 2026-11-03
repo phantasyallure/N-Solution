@@ -882,7 +882,7 @@ fr:{
  tm_confirm_del:"Retirer {n} de l’équipe ? Son accès sera supprimé.",
  tm_scope_pick:"Restaurants autorisés", tm_no_rest_yet:"Aucun restaurant pour l’instant.",
  no_access:"Accès non autorisé", no_access_s:"Votre rôle n’a pas accès à cette page. Demandez au propriétaire d’ajuster vos permissions.",
- login_mail:"E-mail (si vous êtes membre de l’équipe)",
+ login_mail:"E-mail",login_member:"Je suis membre de l’équipe",login_owner:"Accès propriétaire (code seul)",
  an_empty:"Pas encore de données", an_empty_s:"Ajoutez un restaurant pour voir les analyses de la plateforme.",
  an_total:"Total", an_avg:"Moyenne / jour", an_peak:"Pic", rs_accounts:"Restaurants",
  /* ai */
@@ -1072,7 +1072,7 @@ en:{
  tm_confirm_del:"Remove {n} from the team? Their access will be deleted.",
  tm_scope_pick:"Allowed restaurants", tm_no_rest_yet:"No restaurant yet.",
  no_access:"Access denied", no_access_s:"Your role cannot open this page. Ask the owner to adjust your permissions.",
- login_mail:"E-mail (if you are a team member)",
+ login_mail:"E-mail",login_member:"I’m a team member",login_owner:"Owner access (code only)",
  an_empty:"No data yet", an_empty_s:"Add a restaurant to see platform analytics.",
  an_total:"Total", an_avg:"Average / day", an_peak:"Peak", rs_accounts:"Restaurants",
  ai_title:"AI assistant", ai_ph:"Ask a question…", ai_send:"Send",
@@ -1257,7 +1257,7 @@ ar:{
  tm_confirm_del:"إزالة {n} من الفريق؟ سيُحذف دخوله.",
  tm_scope_pick:"المطاعم المسموحة", tm_no_rest_yet:"لا يوجد مطعم بعد.",
  no_access:"غير مسموح", no_access_s:"دورك لا يسمح بفتح هذه الصفحة. اطلب من المالك تعديل صلاحياتك.",
- login_mail:"البريد (إذا كنت عضواً في الفريق)",
+ login_mail:"البريد الإلكتروني",login_member:"أنا عضو في الفريق",login_owner:"دخول المالك (الرمز فقط)",
  an_empty:"لا توجد بيانات بعد", an_empty_s:"أضف مطعماً لعرض تحليلات المنصة.",
  an_total:"المجموع", an_avg:"المتوسط / يوم", an_peak:"الذروة", rs_accounts:"المطاعم",
  ai_title:"المساعد الذكي", ai_ph:"اطرح سؤالاً…", ai_send:"إرسال",
@@ -1352,7 +1352,7 @@ const DEFAULT_SETTINGS = {
   platform:"Nardjis Platform", support:"support@nardjis.com", tz:"Africa/Algiers", currency:"EUR",
   monthly:49, yearly:490, trial:14, aiOn:true, model:"gemini-2.5-flash", quota:500,
   warnDays:14, warnOffline:5, weeklyMail:true, codeOn:true, twoFa:false,
-  theme:"auto", lang:"fr", density:"comfort",
+  theme:"light", lang:"fr", density:"comfort",
 };
 
 const ROLE_PRESET = {
@@ -1383,6 +1383,7 @@ function loadStore(){
   try { s = JSON.parse(localStorage.getItem(LS_KEY) || "null"); } catch(e) {}
   if (!s || typeof s !== "object") s = {};
   s.settings = Object.assign({}, DEFAULT_SETTINGS, s.settings || {});
+  if (s.themeV !== 3) { if (s.settings.theme === "auto") s.settings.theme = "light"; s.themeV = 3; }   // light by default, dark is opt-in
   s.subs = s.subs || {}; s.team = s.team || null; s.incidents = s.incidents || null;
   s.usage = s.usage || {}; s.history = s.history || {}; s.types = s.types || {};
   if (!s.team) s.team = seedTeam();
@@ -1495,7 +1496,7 @@ const t = k => (I[L] && I[L][k] != null) ? I[L][k] : (I.en[k] != null ? I.en[k] 
 const T = () => I[L] || I.en;
 
 function applyTheme(){
-  const pref = ST.settings.theme || "auto";
+  const pref = ST.settings.theme || "light";
   const dark = pref === "dark" || (pref === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
   const meta = document.querySelector('meta[name="theme-color"]');
@@ -1689,10 +1690,11 @@ function showLogin(notConfigured){
     <img class="mark lg" src="/static/emblem.png" alt="" onerror="this.style.display='none'">
     <h1>${esc(t("welcome"))}</h1><p>${esc(t("welcome_s"))}</p>
     <div class="box">
-      <input class="inp" id="mail" type="email" autocomplete="username" placeholder="${esc(t("login_mail"))}" style="letter-spacing:0;font-size:14px">
+      <input class="inp" id="mail" type="email" autocomplete="username" placeholder="${esc(t("login_mail"))}" style="letter-spacing:0;font-size:14px" hidden>
       <input class="inp" id="code" type="password" autocomplete="current-password" placeholder="${esc(t("code"))}">
       <div class="err" id="lerr"></div>
       <button class="btn lg block" id="lbtn">${esc(t("enter"))}</button>
+      <button type="button" class="btn sm ghost block" id="mtoggle" style="border-color:transparent;background:transparent;color:var(--muted)">${esc(t("login_member"))}</button>
     </div></div>`;
   const go = async () => {
     const r = await fetch(A("login"), {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({code:$("code").value, email:$("mail").value.trim()})});
@@ -1706,6 +1708,12 @@ function showLogin(notConfigured){
   $("lbtn").onclick = go;
   $("code").onkeydown = e => { if (e.key === "Enter") go(); };
   $("mail").onkeydown = e => { if (e.key === "Enter") $("code").focus(); };
+  $("mtoggle").onclick = () => {
+    const on = $("mail").hidden;
+    $("mail").hidden = !on; if (!on) $("mail").value = "";
+    $("mtoggle").textContent = on ? t("login_owner") : t("login_member");
+    (on ? $("mail") : $("code")).focus();
+  };
   $("code").focus();
 }
 
