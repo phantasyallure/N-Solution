@@ -938,6 +938,7 @@ fr:{
  none_l:"Rien pour l’instant",demo_x:"DÉMO ×",live_l:"EN DIRECT",
  star:"Meilleur effort", atn_l:"à surveiller", avgw_l:"attente moy.", alerts_l:"alertes",
  toast_saved:"Enregistré",
+ type_restaurant:"Restaurant",type_cafeteria:"Cafétéria",rs_type:"Type",
 },
 en:{
  lang:"en",
@@ -1123,6 +1124,7 @@ en:{
  none_l:"Nothing yet",demo_x:"DEMO ×",live_l:"LIVE",
  star:"Top effort", atn_l:"to watch", avgw_l:"avg wait", alerts_l:"alerts",
  toast_saved:"Saved",
+ type_restaurant:"Restaurant",type_cafeteria:"Cafeteria",rs_type:"Type",
 },
 ar:{
  lang:"ar",
@@ -1307,6 +1309,7 @@ ar:{
  none_l:"لا شيء بعد",demo_x:"تجريبي ×",live_l:"مباشر",
  star:"أفضل مجهود", atn_l:"للمراقبة", avgw_l:"متوسط الانتظار", alerts_l:"تنبيهات",
  toast_saved:"تم الحفظ",
+ type_restaurant:"مطعم",type_cafeteria:"كافيتيريا",rs_type:"النوع",
 },
 };
 
@@ -1381,7 +1384,7 @@ function loadStore(){
   if (!s || typeof s !== "object") s = {};
   s.settings = Object.assign({}, DEFAULT_SETTINGS, s.settings || {});
   s.subs = s.subs || {}; s.team = s.team || null; s.incidents = s.incidents || null;
-  s.usage = s.usage || {}; s.history = s.history || {};
+  s.usage = s.usage || {}; s.history = s.history || {}; s.types = s.types || {};
   if (!s.team) s.team = seedTeam();
   else if (s.v !== 2) s.team = s.team.filter(m => !DEMO_MAIL.includes(m.email));   // drop the old demo members
   s.team = normTeam(s.team); s.v = 2;
@@ -1458,6 +1461,8 @@ function syncLiveUsage(r){
   else { if (!u.off.includes(t)) u.off.push(t); u.on = u.on.filter(d=>d!==t); }
   return u;
 }
+const typeOf = r => (ST.types && ST.types[r.id]) || "restaurant";
+const typeChip = r => `<span class="chip ${typeOf(r)==="cafeteria"?"amber":""}">${esc(t("type_"+typeOf(r)))}</span>`;
 function openIncidents(restId){ return ST.incidents.filter(i => i.status !== "resolved" && (!restId || i.rest === restId)); }
 
 /* ============================================================
@@ -1841,7 +1846,7 @@ function restCard(r){
         <div class="rs"><span class="dot ${!r.online?"off":r.mode==="demo"?"demo":"on pulse"}"></span>${esc(mode)}</div></div>
       <div class="ring" style="--p:${r.health||0};--c:${hcol(r.health||0)}"><b>${r.health??'–'}</b></div>
     </div>
-    <div class="rc-foot">${chipFor(st)}
+    <div class="rc-foot">${typeChip(r)}${chipFor(st)}
       <span class="chip">${ico("calendar","sm")} ${esc(t("rp_days_left").replace("{n}", left))}</span>
       <span class="chip ${s.plan==="yearly"?"slate":""}">${esc(t(s.plan))}</span></div>
     ${tableSummary(r)}
@@ -1857,7 +1862,7 @@ function restCard(r){
 /* ============================================================
    View: RESTAURANTS (manage)
    ============================================================ */
-let rsQuery = "", rsFilter = "all";
+let rsQuery = "", rsFilter = "all", rsType = "all";
 function renderRestaurants(){
   $("view").innerHTML = `
     <div class="page-h">
@@ -1876,6 +1881,9 @@ function renderRestaurants(){
         <div class="search">${ico("search","sm")}<input class="inp" id="rsQ" placeholder="${esc(t("rs_search_ph"))}" value="${esc(rsQuery)}"></div>
         <div class="seg" id="rsF">
           ${["all","online","offline","expiring"].map(f => `<button data-f="${f}" class="${rsFilter===f?"on":""}">${esc(t(f==="all"?"all":f==="expiring"?"expiring":f))}</button>`).join("")}
+        </div>
+        <div class="seg" id="rsT">
+          ${["all","restaurant","cafeteria"].map(f => `<button data-t="${f}" class="${rsType===f?"on":""}">${esc(f==="all"?t("all"):t("type_"+f))}</button>`).join("")}
         </div>
         <div class="sp" style="flex:1"></div>
         <span class="small muted" id="rsCount"></span>
@@ -1897,12 +1905,18 @@ function renderRestaurants(){
     $("rsF").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
     drawRsBody();
   });
+  $("rsT").querySelectorAll("button").forEach(b => b.onclick = () => {
+    rsType = b.dataset.t;
+    $("rsT").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    drawRsBody();
+  });
   drawRsBody();
 }
 function drawRsBody(){
   const q = rsQuery.trim().toLowerCase();
   let list = O.restaurants.filter(r => {
     if (q && !(r.name.toLowerCase().includes(q) || r.id.toLowerCase().includes(q))) return false;
+    if (rsType !== "all" && typeOf(r) !== rsType) return false;
     const s = subOf(r), st = subStatus(s);
     if (rsFilter === "online") return r.online;
     if (rsFilter === "offline") return !r.online;
@@ -1917,7 +1931,7 @@ function drawRsBody(){
     return `<tr>
       <td class="full" data-l="${esc(t("rs_col_rest"))}"><div class="cellname">
         <span class="ico">${esc(r.name[0])}</span>
-        <span><b>${esc(r.name)}</b><span>${esc(r.id)}</span></span></div></td>
+        <span><b>${esc(r.name)}</b><span>${esc(t("type_"+typeOf(r)))} · ${esc(r.id)}</span></span></div></td>
       <td data-l="${esc(t("status"))}"><span class="row" style="gap:6px;justify-content:flex-end">
         <span class="dot ${!r.online?"off":"on pulse"}"></span>
         <span class="small">${esc(r.online ? t("online") : t("offline"))}</span></span></td>
@@ -1940,6 +1954,9 @@ function openCreateDlg(){
     <div class="field"><label>${esc(t("rs_name_h"))}</label><input class="inp" id="cName" placeholder="${esc(t("rs_name_h"))}"></div>
     <div class="field"><label>${esc(t("rs_id"))}</label><input class="inp" id="cId" placeholder="oran-centre">
       <span class="xsmall muted">${esc(t("rs_id_h"))}</span></div>
+    <div class="field"><label>${esc(t("rs_type"))}</label>
+      <select class="inp" id="cType"><option value="restaurant">${esc(t("type_restaurant"))}</option>
+      <option value="cafeteria">${esc(t("type_cafeteria"))}</option></select></div>
     <div class="grid g2">
       <div class="field"><label>${esc(t("rs_city"))}</label><input class="inp" id="cCity" placeholder="Oran"></div>
       <div class="field"><label>${esc(t("rs_cameras"))}</label><input class="inp" id="cCam" type="number" min="1" value="2"></div>
@@ -1960,6 +1977,7 @@ function openCreateDlg(){
     const id = ($("cId").value.trim() || name).toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/^-|-$/g,"");
     if (O.restaurants.some(r => r.id === id)) { toast(t("bad_code")); return; }
     const plan = $("cPlan").value;
+    ST.types[id] = $("cType").value;
     ST.subs[id] = {plan, price: plan==="yearly"?ST.settings.yearly:ST.settings.monthly,
       start: $("cStart").value || todayISO(), end: addDays($("cStart").value || todayISO(), plan==="yearly"?365:30),
       auto:true, status:"active"};
@@ -1990,6 +2008,9 @@ function renderRest(){
       <div><h2>${esc(r.name)}</h2>
         <p><span class="dot ${!r.online?"off":"on pulse"}" style="margin-inline-end:5px"></span>${esc(mode)} · ${esc(r.id)}${inc.length?` · <b style="color:var(--clay)">${inc.length} ${esc(t("hl_incidents")).toLowerCase()}</b>`:""}</p></div>
       <div class="sp"></div>
+      <select class="inp" id="dtType" style="width:auto" aria-label="${esc(t("rs_type"))}">
+        ${["restaurant","cafeteria"].map(k => `<option value="${k}" ${typeOf(r)===k?"selected":""}>${esc(t("type_"+k))}</option>`).join("")}
+      </select>
       <button class="btn ghost" id="dtReport">${ico("reports","sm")} ${esc(t("dt_report"))}</button>
     </div>
 
@@ -2000,6 +2021,7 @@ function renderRest(){
 
   $("dtBack").onclick = () => history.length > 1 ? history.back() : (location.hash = "#/restaurants");
   $("dtReport").onclick = () => showReport(r);
+  $("dtType").onchange = e => { ST.types[r.id] = e.target.value; saveStore(); toast(t("toast_saved")); mount(); };
   $("dtTabs").querySelectorAll("button").forEach(b => b.onclick = () => { location.hash = `#/r/${r.id}/${b.dataset.t}`; });
   drawDTbody(r);
 }
