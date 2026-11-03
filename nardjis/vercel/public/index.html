@@ -471,8 +471,22 @@ async function tick(){
 async function start(){
   $("out").hidden = !needCode;
   parseRoute();
-  try { O = await (await api(A("overview"))).json(); } catch(e) { return; }
+  try {
+    const r = await api(A("overview"));
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.restaurants) { showBackendError(r.status, j.error); return; }
+    O = j;
+  } catch(e) { if (e.message !== "auth") showBackendError(0, "network"); return; }
   mount(); tick();
+}
+function showBackendError(status, code){
+  const why = {
+    supabase_not_configured: "SUPABASE_URL or SUPABASE_SERVICE_KEY is missing in Vercel (Settings → Environment Variables). Add them, then Redeploy.",
+    backend: "The server could not read Supabase. Check that SUPABASE_URL and SUPABASE_SERVICE_KEY are correct, and that vercel/supabase.sql was run in the Supabase SQL Editor. Details: Vercel → Logs.",
+    not_configured: "ACCESS_CODE is missing in Vercel. Add it, then Redeploy.",
+    network: "Could not reach the server. Check your connection and reload."
+  }[code] || "Unexpected server error.";
+  $("app").innerHTML = `<main><div class="card" style="max-width:560px;margin:40px auto"><h2 style="margin:0 0 8px">Dashboard cannot load data</h2><div class="hint" style="text-align:start">${esc(why)}</div><div class="hint" style="text-align:start;opacity:.6">HTTP ${status} · ${esc(code || "")}</div></div></main>`;
 }
 (async () => {
   setLang(L);
