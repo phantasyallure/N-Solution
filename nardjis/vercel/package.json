@@ -6,6 +6,6 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "dev": "node dev-server.js",
-    "test": "node --test test/core.test.js"
+    "test": "node --test test/core.test.js test/brand.test.js"
   }
 }
