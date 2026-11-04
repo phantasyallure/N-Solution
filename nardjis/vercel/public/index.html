@@ -3,7 +3,7 @@
 <main class="wrap"><section class="hero"><div>
 <h1>Votre salle sous contrôle, en temps réel.</h1>
 <p>Restaurants, cafés, cafétérias : suivez les attentes, le nettoyage et l’effort de votre équipe depuis votre téléphone.</p></div>
-<div class="card"><div class="tabs"><button class="on" data-t="l">Gérant</button><button data-t="e">Employé</button><button data-t="s">Créer un compte</button></div>
+<div class="login"><div class="ltabs"><button class="on" data-t="l">Gérant</button><button data-t="e">Employé</button><button data-t="s">Créer un compte</button></div>
 <form id="fl"><label>E-mail<input name="email" type="email" autocomplete="username" required></label>
 <label>Mot de passe<input name="password" type="password" autocomplete="current-password" required></label>
 <div class="err"></div><button class="btn">Accéder à mon espace</button></form>
@@ -18,11 +18,21 @@
 <label>Mot de passe (8 caractères min.)<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
 <div class="err"></div><button class="btn">Créer mon compte</button>
 <p class="muted" style="font-size:12px">En créant un compte, vous acceptez notre <a href="/privacy">politique de confidentialité</a>.</p></form></div></section></main>
+<section class="about" id="apropos"><div class="wrap prose"><h2 style="font-size:28px;letter-spacing:-.02em;margin:0">À propos de Nardjis</h2>
+<p class="lead">Nardjis aide les restaurants et les cafés à garder leur salle sous contrôle, sans alourdir le travail de l’équipe.</p>
+<div class="sec">
+<div class="card"><h2>Ce que nous faisons</h2><p>Un système à base de caméras suit l’état de chaque table : en attente, servie, à nettoyer. Vous voyez les temps d’attente en direct et recevez une alerte quand un client attend trop longtemps.</p></div>
+<div class="card"><h2>Pour votre équipe</h2><p>Chaque employé a son identifiant et reçoit une alerte sur son téléphone quand une table attend ou doit être nettoyée : il sait laquelle, tout de suite.</p></div>
+<div class="card"><h2>Respect de la vie privée</h2><p>Les visages sont floutés et nous ne vendons aucune donnée. Les détails sont dans notre <a href="/privacy">politique de confidentialité</a>.</p></div></div>
+<h2 style="margin-top:34px">Comment ça marche</h2>
+<ol class="steps"><li>Créez le compte de votre établissement.</li><li>Nous installons et connectons le système dans votre salle.</li><li>Suivez votre salle et gérez vos employés depuis votre espace.</li></ol>
+<p style="margin-top:22px"><a class="btn" href="#signup">Créer mon compte</a></p></div></section>
 <div id="ftr"></div><script src="/static/site.js"></script>
 <script>
-const $=s=>document.querySelector(s),tb=[...document.querySelectorAll(".tabs button")];
+const $=s=>document.querySelector(s),tb=[...document.querySelectorAll(".ltabs button")];
 const show=k=>{tb.forEach(b=>b.classList.toggle("on",b.dataset.t===k));$("#fl").hidden=k!=="l";$("#fe").hidden=k!=="e";$("#fs").hidden=k!=="s"};
 tb.forEach(b=>b.onclick=()=>show(b.dataset.t));if(location.hash==="#signup")show("s");
+addEventListener("hashchange",()=>{if(location.hash==="#signup"){show("s");scrollTo({top:0,behavior:"smooth"})}});
 const MSG={bad_login:"E-mail ou mot de passe incorrect.",email_taken:"Cet e-mail a déjà un compte.",weak:"Mot de passe : 8 caractères minimum.",invalid:"Vérifiez les champs.",busy:"Trop d’essais, patientez une minute.",not_configured:"Service pas encore configuré."};
 for(const [id,op] of [["fl","m_login"],["fe","e_login"],["fs","m_signup"]])$("#"+id).onsubmit=async e=>{e.preventDefault();const f=e.target,er=f.querySelector(".err"),b=f.querySelector(".btn");er.textContent="";b.disabled=true;
 try{const r=await fetch("/api?op="+op,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.fromEntries(new FormData(f)))});
