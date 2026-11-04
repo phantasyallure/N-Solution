@@ -19,7 +19,8 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".png": "image/png", ".json
 http.createServer((req, res) => {
   const p = new URL(req.url, "http://x").pathname;
   if (p === "/api") return api(req, res);
-  const file = path.join(PUB, p === "/" ? "index.html" : p);
+  let file = path.join(PUB, p === "/" ? "index.html" : p);
+  if (!path.extname(file) && fs.existsSync(file + ".html")) file += ".html";   // clean URLs: /admin -> admin.html
   if (!file.startsWith(PUB) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.statusCode = 404; return res.end("not found"); }
   res.setHeader("Content-Type", TYPES[path.extname(file)] || "application/octet-stream");
   fs.createReadStream(file).pipe(res);
