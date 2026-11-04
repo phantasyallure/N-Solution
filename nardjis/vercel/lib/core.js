@@ -148,12 +148,115 @@ function createHandler({ env, fetch: fetchFn }) {
   const cookies = (req) => Object.fromEntries((req.headers.cookie || "").split(";").map((c) => c.trim().split(/=(.*)/s).slice(0, 2)).filter((x) => x[0]));
   const authed = (req) => !!code && same(cookies(req).nsess || "", token);
 
-  async function sb(path) {
-    const headers = { apikey: sbKey };
+  async function sb(path, opt = {}) {
+    const headers = { apikey: sbKey, ...(opt.headers || {}) };
     if (sbKey.startsWith("eyJ")) headers.Authorization = `Bearer ${sbKey}`;
-    const r = await fetchFn(`${sbUrl}/rest/v1/${path}`, { headers });
+    const r = await fetchFn(`${sbUrl}/rest/v1/${path}`, { ...opt, headers });
     if (!r.ok) throw new Error(`db ${r.status}`);
-    return r.json();
+    return r.status === 204 ? null : r.json();
+  }
+  const sbw = (path, method, body) => sb(path, { method, body: JSON.stringify(body), headers: { "Content-Type": "application/json", Prefer: "return=representation" } });
+
+  /* ---------- manager accounts (restaurant / cafeteria owners): /app ---------- */
+  const msecret = env.SESSION_SECRET || sbKey || code;
+  const hashPw = (pw, salt) => crypto.scryptSync(String(pw), salt, 32).toString("hex");
+  const mSig = (b) => crypto.createHmac("sha256", msecret).update(b).digest("base64url");
+  const mSign = (p) => { const b = Buffer.from(JSON.stringify({ ...p, exp: Date.now() + 30 * 864e5 })).toString("base64url"); return `${b}.${mSig(b)}`; };
+  const mAuth = (req, name = "msess") => {
+    const [b, sig] = (cookies(req)[name] || "").split(".");
+    if (!b || !sig || !msecret || !same(sig, mSig(b))) return null;
+    try { const p = JSON.parse(Buffer.from(b, "base64url")); return p.exp > Date.now() ? p : null; } catch { return null; }
+  };
+  async function manager(op, req, post, send) {
+    if (!sbUrl || !sbKey || !msecret) return send(503, { error: "not_configured" });
+    const secure = req.headers["x-forwarded-proto"] === "https" ? "; Secure" : "";
+    const ck = (v, age, name = "msess") => ({ "Set-Cookie": `${name}=${v}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${age}${secure}` });
+    const sess = (a) => ck(mSign({ aid: a.id, rid: a.restaurant_id }), 2592000);
+    const E = encodeURIComponent;
+    if (op === "m_logout" && post) return send(200, { ok: true }, "application/json", ck("", 0));
+    if ((op === "m_signup" || op === "m_login") && post) {
+      const ip = String(req.headers["x-forwarded-for"] || "?").split(",")[0].trim(), now = Date.now();
+      const f = (fails.get(ip + op) || []).filter((t) => now - t < 60000);
+      if (f.length >= 5) return send(429, { error: "busy" });
+      f.push(now); fails.set(ip + op, f);
+      const b = await readBody(req), email = String(b.email || "").trim().toLowerCase(), pw = String(b.password || "");
+      if (op === "m_login") {
+        const [a] = await sb(`nj_accounts?select=*&email=eq.${E(email)}`);
+        if (!a || !same(hashPw(pw, a.pass_salt), a.pass_hash)) return send(401, { error: "bad_login" });
+        return send(200, { ok: true }, "application/json", sess(a));
+      }
+      const name = String(b.business || "").trim().slice(0, 60), mgr = String(b.manager || "").trim().slice(0, 60);
+      if (name.length < 2 || mgr.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return send(400, { error: "invalid" });
+      if (pw.length < 8) return send(400, { error: "weak" });
+      if ((await sb(`nj_accounts?select=id&email=eq.${E(email)}`)).length) return send(409, { error: "email_taken" });
+      const rid = (name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30) || "resto") + "-" + crypto.randomBytes(2).toString("hex");
+      const salt = crypto.randomBytes(16).toString("hex");
+      await sbw("nj_restaurants", "POST", { id: rid, name });
+      const [a] = await sbw("nj_accounts", "POST", {
+        restaurant_id: rid, business_name: name, business_type: ["restaurant", "cafeteria", "other"].includes(b.type) ? b.type : "restaurant",
+        city: String(b.city || "").trim().slice(0, 60), manager_name: mgr, email, pass_salt: salt, pass_hash: hashPw(pw, salt),
+      });
+      return send(200, { ok: true }, "application/json", sess(a));
+    }
+    if (op === "e_logout" && post) return send(200, { ok: true }, "application/json", ck("", 0, "esess"));
+    if (op === "e_login" && post) {
+      const ip = String(req.headers["x-forwarded-for"] || "?").split(",")[0].trim(), now = Date.now();
+      const f = (fails.get(ip + op) || []).filter((t) => now - t < 60000);
+      if (f.length >= 5) return send(429, { error: "busy" });
+      f.push(now); fails.set(ip + op, f);
+      const b = await readBody(req);
+      const [m] = await sb(`nj_employees?select=*&emp_code=eq.${E(String(b.id || "").trim().toUpperCase())}`);
+      if (!m || !m.active || !m.pin_hash || !same(hashPw(String(b.pin || ""), m.pin_salt), m.pin_hash)) return send(401, { error: "bad_login" });
+      return send(200, { ok: true }, "application/json", ck(mSign({ eid: m.id, rid: m.restaurant_id }), 2592000, "esess"));
+    }
+    if (op === "e_state" && !post) {
+      const es = mAuth(req, "esess");
+      if (!es) return send(401, { error: "auth" });
+      const [m] = await sb(`nj_employees?select=name,active&id=eq.${E(es.eid)}`);
+      if (!m || !m.active) return send(401, { error: "auth" });   // deactivated or deleted by the manager
+      const [st, rs] = await Promise.all([sb(`nj_state?select=state,updated_at&restaurant_id=eq.${E(es.rid)}`), sb(`nj_restaurants?select=name&id=eq.${E(es.rid)}`)]);
+      const alerts = st.length ? (st[0].state.tables || []).filter((t) => t.state === "waiting" || t.state === "dirty")
+        .map((t) => ({ table: t.name, kind: t.state, seconds: t.state === "waiting" ? t.wait : t.dirty, level: t.level })) : [];
+      return send(200, { name: m.name, restaurant: rs.length ? rs[0].name : "", online: st.length ? Date.now() - Date.parse(st[0].updated_at) < 30000 : false, alerts });
+    }
+    const s = mAuth(req);
+    if (!s || !s.aid) return send(401, { error: "auth" });
+    const RID = `restaurant_id=eq.${E(s.rid)}`;
+    if (op === "m_me" && !post) {
+      const [a] = await sb(`nj_accounts?select=business_name,business_type,city,manager_name,email,restaurant_id&id=eq.${E(s.aid)}`);
+      return a ? send(200, { business_name: a.business_name, business_type: a.business_type, city: a.city, manager_name: a.manager_name, email: a.email, restaurant_id: a.restaurant_id }) : send(401, { error: "auth" });
+    }
+    if (op === "m_state" && !post) {
+      const r = await sb(`nj_state?select=state,updated_at&${RID}`);
+      return send(200, r.length ? { ...r[0].state, online: Date.now() - Date.parse(r[0].updated_at) < 30000 } : { waiting: true });
+    }
+    if (op === "m_staff" && !post) return send(200, await sb(`nj_employees?select=id,emp_code,name,role,active&${RID}&order=created_at`));
+    if (post && op.startsWith("m_staff_")) {
+      const b = await readBody(req), ROLES = ["waiter", "cleaner", "cook", "manager", "other"];
+      if (op === "m_staff_add") {
+        const nm = String(b.name || "").trim().slice(0, 60);
+        if (nm.length < 2) return send(400, { error: "invalid" });
+        const pre = s.rid.replace(/[^a-z]/g, "").slice(0, 3).toUpperCase().padEnd(3, "X");
+        const pin = String(crypto.randomInt(0, 1e6)).padStart(6, "0"), salt = crypto.randomBytes(8).toString("hex");
+        for (let i = 0; ; i++) {
+          try {
+            const [m] = await sbw("nj_employees", "POST", { restaurant_id: s.rid, emp_code: `${pre}-${crypto.randomInt(1000, 10000)}`, name: nm, role: ROLES.includes(b.role) ? b.role : "waiter", pin_salt: salt, pin_hash: hashPw(pin, salt) });
+            return send(200, { id: m.id, emp_code: m.emp_code, name: m.name, role: m.role, active: m.active, pin });   // the PIN is shown once, never stored in clear
+          } catch (err) { if (i >= 4) throw err; }   // emp_code collision: draw another
+        }
+      }
+      if (!/^[0-9a-f-]{36}$/i.test(String(b.id || ""))) return send(404, { error: "unknown employee" });
+      const f = `nj_employees?${RID}&id=eq.${E(b.id)}`, patch = {};
+      if (typeof b.name === "string" && b.name.trim().length > 1) patch.name = b.name.trim().slice(0, 60);
+      if (ROLES.includes(b.role)) patch.role = b.role;
+      if (typeof b.active === "boolean") patch.active = b.active;
+      let pin;
+      if (op === "m_staff_edit" && b.reset_pin) { pin = String(crypto.randomInt(0, 1e6)).padStart(6, "0"); patch.pin_salt = crypto.randomBytes(8).toString("hex"); patch.pin_hash = hashPw(pin, patch.pin_salt); }
+      if (op === "m_staff_del") await sb(f, { method: "DELETE" });
+      else if (op === "m_staff_edit" && Object.keys(patch).length) await sbw(f, "PATCH", patch);
+      return send(200, pin ? { ok: true, pin } : { ok: true });
+    }
+    return send(404, { error: "unknown op" });
   }
   const idOk = (id) => /^[\w-]{1,64}$/.test(id || "");
 
@@ -214,6 +317,7 @@ function createHandler({ env, fetch: fetchFn }) {
       const q = new URL(req.url, "http://x").searchParams;
       const op = q.get("op") || "";
       const post = req.method === "POST";
+      if (/^[me]_/.test(op)) return await manager(op, req, post, send);
 
       if (op === "auth" && !post) return send(200, { required: true, ok: authed(req), configured: !!code });
       if (!code) return send(503, { error: "not_configured" });   // fail closed: never serve data without ACCESS_CODE
