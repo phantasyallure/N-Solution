@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pyyaml
+# Live camera mode only (not needed for --demo):
+# ultralytics
+# opencv-python
+# For running the tests: pytest httpx
