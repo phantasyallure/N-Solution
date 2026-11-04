@@ -98,6 +98,41 @@ function midnightISO(tz, now = new Date()) {
   return new Date(now.getTime() - ms).toISOString();
 }
 
+
+function buildManagerReport(events, tableNames, tz) {
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" });
+  const loc = (ts) => { const p = Object.fromEntries(fmt.formatToParts(new Date(ts)).map((x) => [x.type, x.value])); return { day: `${p.year}-${p.month}-${p.day}`, hour: +p.hour }; };
+  const monday = (day) => { const d = new Date(day + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+  const days = {}, hours = Array(24).fill(0), tables = {}, staff = {};
+  for (const n of tableNames) tables[n] = 0;
+  const k = { seated: 0, served: 0, wait: 0, left: 0, cleaned: 0, clean: 0 };
+  const who = (n) => staff[n] || (staff[n] = { name: n, served: 0, cleaned: 0, resp: 0, weeks: {} });
+  for (const e of events) {
+    const { day, hour } = loc(e.ts);
+    const d = days[day] || (days[day] = { day, seated: 0, served: 0, left_unserved: 0, wait: 0 });
+    if (e.type === "seated") { d.seated++; k.seated++; hours[hour]++; if (e.table_name) tables[e.table_name] = (tables[e.table_name] || 0) + 1; }
+    else if (e.type === "left_unserved") { d.left_unserved++; k.left++; }
+    else if (e.type === "served" || e.type === "cleaned") {
+      const sec = e.seconds || 0;
+      if (e.type === "served") { d.served++; d.wait += sec; k.served++; k.wait += sec; } else { k.cleaned++; k.clean += sec; }
+      if (e.staff) { const p = who(e.staff), w = monday(day); p[e.type]++; p.resp += sec; p.weeks[w] = (p.weeks[w] || 0) + 1; }
+    }
+  }
+  const people = Object.values(staff).map((p) => ({ name: p.name, served: p.served, cleaned: p.cleaned, points: p.served + p.cleaned, avg_response: (p.served + p.cleaned) ? p.resp / (p.served + p.cleaned) : null, weeks: p.weeks }))
+    .sort((a, b) => b.points - a.points || (a.avg_response || 0) - (b.avg_response || 0));
+  const allWeeks = [...new Set(people.flatMap((p) => Object.keys(p.weeks)))].sort();
+  const weekly_best = allWeeks.map((w) => { const best = people.map((p) => ({ name: p.name, points: p.weeks[w] || 0 })).sort((a, b) => b.points - a.points)[0]; return { week: w, name: best.name, points: best.points }; });
+  const use = Object.entries(tables).map(([name, uses]) => ({ name, uses })).sort((a, b) => b.uses - a.uses);
+  const peak = Math.max(...hours);
+  return {
+    kpi: { seated: k.seated, served: k.served, avg_wait: k.served ? k.wait / k.served : null, left_unserved: k.left, cleaned: k.cleaned, avg_clean: k.cleaned ? k.clean / k.cleaned : null },
+    days: Object.values(days).sort((a, b) => a.day.localeCompare(b.day)).map((d) => ({ ...d, avg_wait: d.served ? d.wait / d.served : null })),
+    hours, peak_hour: peak ? hours.indexOf(peak) : null,
+    tables: use.filter((t) => t.uses > 0), unused: use.filter((t) => t.uses === 0).map((t) => t.name),
+    staff: people.map(({ weeks, ...p }) => p), weekly_best,
+  };
+}
+
 class AiError extends Error { constructor(code, msg) { super(msg || code); this.code = code; } }
 
 async function gemini(fetchFn, key, models, prompt) {
@@ -229,6 +264,17 @@ function createHandler({ env, fetch: fetchFn }) {
     if (op === "m_state" && !post) {
       const r = await sb(`nj_state?select=state,updated_at&${RID}`);
       return send(200, r.length ? { ...r[0].state, online: Date.now() - Date.parse(r[0].updated_at) < 30000 } : { waiting: true });
+    }
+    if (op === "m_report" && !post) {
+      const days = Math.min(90, Math.max(1, parseInt(new URL(req.url, "http://x").searchParams.get("days"), 10) || 30));
+      const since = encodeURIComponent(new Date(Date.now() - days * 864e5).toISOString()), ev = [];
+      for (let off = 0; off < 15000; off += 1000) {
+        const part = await sb(`nj_events?select=ts,type,table_name,staff,seconds&${RID}&ts=gte.${since}&order=ts&limit=1000&offset=${off}`);
+        ev.push(...part); if (part.length < 1000) break;
+      }
+      const st = await sb(`nj_state?select=state&${RID}`);
+      const names = st.length ? (st[0].state.tables || []).map((t) => t.name) : [];
+      return send(200, { days, ...buildManagerReport(ev, names, tz) });
     }
     if (op === "m_staff" && !post) return send(200, await sb(`nj_employees?select=id,emp_code,name,role,active&${RID}&order=created_at`));
     if (post && op.startsWith("m_staff_")) {
@@ -378,4 +424,4 @@ function createHandler({ env, fetch: fetchFn }) {
   };
 }
 
-module.exports = { createHandler, groupOverview, buildContext, buildReport, midnightISO, gemini, AiError };
+module.exports = { buildManagerReport, createHandler, groupOverview, buildContext, buildReport, midnightISO, gemini, AiError };
