@@ -42,7 +42,9 @@ function withBrand(handler, env, fetchFn) {
     if (sbKey.startsWith("eyJ")) headers.Authorization = `Bearer ${sbKey}`;
     const r = await fetchFn(`${sbUrl}/rest/v1/${path}`, { ...opt, headers });
     if (!r.ok) { const t = await r.text().catch(() => ""); throw new Error(`db ${r.status} ${t.slice(0, 300)}`); }
-    return r.status === 204 ? null : r.json();
+    // return=minimal answers 201/204 with an EMPTY body: only parse JSON when there is one
+    const body = r.status === 204 ? "" : await r.text();
+    return body ? JSON.parse(body) : null;
   };
   async function getName() {
     if (Date.now() - cache.at < 15000) return cache.name;
