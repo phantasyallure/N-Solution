@@ -90,3 +90,16 @@ h1.t{font-size:32px;letter-spacing:-.02em}h2{font-size:19px;margin-bottom:6px}.m
 .plan-c ul{list-style:none;padding:0;margin:16px 0 22px;display:grid;gap:9px;font-size:14px;flex:1}
 .plan-c li{padding-inline-start:24px;position:relative}.plan-c li::before{content:"";position:absolute;inset-inline-start:0;top:.35em;width:14px;height:8px;border-left:2.5px solid var(--teal);border-bottom:2.5px solid var(--teal);transform:rotate(-45deg) scale(.9)}
 .plan-c .btn{width:100%}.plan-c.hot .btn{background:var(--orange);color:var(--navy);font-weight:700}
+
+/* pricing section (homepage) */
+.pricing{scroll-margin-top:70px}.pricing[hidden]{display:none}
+.bill{display:inline-flex;gap:4px;padding:4px;margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.bill button{border:0;background:transparent;font:600 13px inherit;font-family:inherit;padding:8px 16px;border-radius:9px;cursor:pointer;color:var(--mute)}
+.bill button.on{background:var(--navy);color:#fff}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:22px}
+.plan{position:relative;display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px}
+.plan.hot{border:2px solid var(--teal);box-shadow:0 24px 60px -30px rgba(16,45,80,.5)}
+.plan h3{margin:0;font-size:18px}.plan p{margin:0;font-size:14px}
+.plan .badge{position:absolute;top:-12px;right:16px;background:var(--teal);color:#fff;font:700 12px inherit;font-family:inherit;padding:4px 10px;border-radius:999px}
+.plan .price b{font-size:26px;letter-spacing:-.02em}.plan .price small{color:var(--mute);margin-left:4px}
+.plan ul{margin:0;padding:0 0 0 18px;display:grid;gap:6px;font-size:14px;flex:1}
