@@ -41,7 +41,7 @@ function withBrand(handler, env, fetchFn) {
     const headers = { apikey: sbKey, ...(opt.headers || {}) };
     if (sbKey.startsWith("eyJ")) headers.Authorization = `Bearer ${sbKey}`;
     const r = await fetchFn(`${sbUrl}/rest/v1/${path}`, { ...opt, headers });
-    if (!r.ok) throw new Error(`db ${r.status}`);
+    if (!r.ok) { const t = await r.text().catch(() => ""); throw new Error(`db ${r.status} ${t.slice(0, 300)}`); }
     return r.status === 204 ? null : r.json();
   };
   async function getName() {
@@ -110,7 +110,7 @@ function withBrand(handler, env, fetchFn) {
             headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
             body: JSON.stringify({ key: "pricing", value: clean }),
           });
-        } catch { return json(res, 500, { error: "setup" }); }
+        } catch (e) { return json(res, 500, { error: "setup", detail: String(e && e.message) }); }   // detail: admin-only, helps diagnose Supabase setup
         return json(res, 200, { ok: true, ...clean });
       }
       // daily reports are plain text built with the default name: swap in the current one
