@@ -1,0 +1,90 @@
+"use strict";
+// Platform name shared by every page. Stored in Supabase (table nj_settings, key "brand").
+//   GET  /api?op=brand      -> { name }            (public)
+//   POST /api?op=brand_set  -> { ok, name }        (admin session only)
+const crypto = require("crypto");
+
+function withBrand(handler, env, fetchFn) {
+  const DEFAULT = (env.PLATFORM_NAME || "Nardjis").trim() || "Nardjis";
+  const code = env.ACCESS_CODE || "";
+  const token = code ? crypto.createHmac("sha256", code).update("nardjis-session").digest("hex") : "";
+  const sbUrl = (env.SUPABASE_URL || "").replace(/\/+$/, "");
+  const sbKey = env.SUPABASE_SERVICE_KEY || "";
+  let cache = { name: DEFAULT, at: 0 };
+
+  const h256 = (x) => crypto.createHash("sha256").update(String(x)).digest();
+  const same = (a, b) => crypto.timingSafeEqual(h256(a), h256(b));
+  const authed = (req) => {
+    const m = /(?:^|;\s*)nsess=([^;]*)/.exec(req.headers.cookie || "");
+    return !!code && !!m && same(m[1], token);
+  };
+  const db = async (path, opt = {}) => {
+    const headers = { apikey: sbKey, ...(opt.headers || {}) };
+    if (sbKey.startsWith("eyJ")) headers.Authorization = `Bearer ${sbKey}`;
+    const r = await fetchFn(`${sbUrl}/rest/v1/${path}`, { ...opt, headers });
+    if (!r.ok) throw new Error(`db ${r.status}`);
+    return r.status === 204 ? null : r.json();
+  };
+  async function getName() {
+    if (Date.now() - cache.at < 15000) return cache.name;
+    let name = DEFAULT;
+    if (sbUrl && sbKey) {
+      try {
+        const rows = await db("nj_settings?select=value&key=eq.brand");
+        const n = rows && rows[0] && rows[0].value && rows[0].value.name;
+        if (typeof n === "string" && n.trim()) name = n.trim();
+      } catch { /* table not created yet -> default name */ }
+    }
+    cache = { name, at: Date.now() };
+    return name;
+  }
+  const json = (res, status, body) => {
+    res.statusCode = status;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store");
+    res.end(JSON.stringify(body));
+  };
+  const readBody = async (req) => {
+    if (req.body !== undefined && req.body !== null) {
+      if (typeof req.body === "string") { try { return JSON.parse(req.body); } catch { return {}; } }
+      return typeof req.body === "object" ? req.body : {};
+    }
+    const chunks = [];
+    for await (const c of req) chunks.push(c);
+    try { return JSON.parse(Buffer.concat(chunks).toString() || "{}"); } catch { return {}; }
+  };
+
+  return async function (req, res) {
+    try {
+      const op = new URL(req.url, "http://x").searchParams.get("op") || "";
+      if (op === "brand" && req.method !== "POST") return json(res, 200, { name: await getName() });
+      if (op === "brand_set" && req.method === "POST") {
+        if (!authed(req)) return json(res, 401, { error: "auth" });
+        if (!sbUrl || !sbKey) return json(res, 503, { error: "supabase_not_configured" });
+        const b = await readBody(req);
+        const name = String(b.name || "").replace(/[<>"&]/g, "").replace(/\s+/g, " ").trim().slice(0, 40);
+        if (!name) return json(res, 400, { error: "invalid" });
+        try {
+          await db("nj_settings?on_conflict=key", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+            body: JSON.stringify({ key: "brand", value: { name } }),
+          });
+        } catch { return json(res, 500, { error: "setup" }); }   // nj_settings table missing
+        cache = { name, at: Date.now() };
+        return json(res, 200, { ok: true, name });
+      }
+      // daily reports are plain text built with the default name: swap in the current one
+      if (op === "report" || op === "m_report") {
+        const name = await getName();
+        if (name !== "Nardjis") {
+          const end = res.end.bind(res);
+          res.end = (chunk, ...a) => end(typeof chunk === "string" ? chunk.split("Nardjis").join(name) : chunk, ...a);
+        }
+      }
+    } catch (e) { console.error("[brand]", e && e.message); }
+    return handler(req, res);
+  };
+}
+
+module.exports = { withBrand };
