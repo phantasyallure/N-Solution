@@ -93,4 +93,37 @@ function withBrand(handler, env, fetchFn) {
         cache = { name, at: Date.now() };
         return json(res, 200, { ok: true, name });
       }
-      if (op === "pricing" && req.method !==
+      if (op === "pricing" && req.method !== "POST") {
+        let out = { currency: "DZD", plans: [] };
+        if (sbUrl && sbKey) {
+          try { const rows = await db("nj_settings?select=value&key=eq.pricing"); if (rows && rows[0] && rows[0].value) out = cleanPricing(rows[0].value); } catch { /* table missing -> no pricing */ }
+        }
+        return json(res, 200, out);
+      }
+      if (op === "pricing_set" && req.method === "POST") {
+        if (!authed(req)) return json(res, 401, { error: "auth" });
+        if (!sbUrl || !sbKey) return json(res, 503, { error: "supabase_not_configured" });
+        const clean = cleanPricing(await readBody(req));
+        try {
+          await db("nj_settings?on_conflict=key", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+            body: JSON.stringify({ key: "pricing", value: clean }),
+          });
+        } catch { return json(res, 500, { error: "setup" }); }
+        return json(res, 200, { ok: true, ...clean });
+      }
+      // daily reports are plain text built with the default name: swap in the current one
+      if (op === "report" || op === "m_report") {
+        const name = await getName();
+        if (name !== "Nardjis") {
+          const end = res.end.bind(res);
+          res.end = (chunk, ...a) => end(typeof chunk === "string" ? chunk.split("Nardjis").join(name) : chunk, ...a);
+        }
+      }
+    } catch (e) { console.error("[brand]", e && e.message); }
+    return handler(req, res);
+  };
+}
+
+module.exports = { withBrand, cleanPricing };
