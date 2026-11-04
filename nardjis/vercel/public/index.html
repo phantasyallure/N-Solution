@@ -53,7 +53,7 @@ const cur=D.currency||"DZD",nf=new Intl.NumberFormat("fr-FR",{maximumFractionDig
 const sav=p=>p.monthly>0&&p.yearly>0?Math.round(100-p.yearly/(p.monthly*12)*100):0;
 const best=Math.max(0,...D.plans.map(sav));let mode="m";
 const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
-function draw(){box.textContent="";
+function draw(){box.textContent="";box.dataset.n=D.plans.length;
 D.plans.forEach((p,i)=>{const c=el("div","plan-c"+(p.featured?" hot":""));c.style.setProperty("--i",i);
 if(p.featured)c.appendChild(el("span","tag","★ Le plus populaire"));
 c.appendChild(el("h3",null,p.name));c.appendChild(el("p","d",p.desc||""));
