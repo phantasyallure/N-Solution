@@ -2,7 +2,7 @@
   "name": "Nardjis Solutions",
   "short_name": "Nardjis",
   "description": "Restaurant intelligence: waiting times, clean tables, team effort.",
-  "start_url": "/",
+  "start_url": "/admin",
   "display": "standalone",
   "background_color": "#F5F8F7",
   "theme_color": "#0D1413",
