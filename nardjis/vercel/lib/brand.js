@@ -2,7 +2,26 @@
 // Platform name shared by every page. Stored in Supabase (table nj_settings, key "brand").
 //   GET  /api?op=brand      -> { name }            (public)
 //   POST /api?op=brand_set  -> { ok, name }        (admin session only)
+//   GET  /api?op=pricing      -> { currency, plans }  (public, shown on the homepage; key "pricing")
+//   POST /api?op=pricing_set  -> { ok, ...pricing }   (admin session only)
 const crypto = require("crypto");
+
+const CURRENCIES = ["DZD", "EUR", "USD", "MAD", "TND"];
+const txt = (v, n) => String(v == null ? "" : v).replace(/[<>"&]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
+const price = (v) => { const n = Math.round(Number(v) * 100) / 100; return Number.isFinite(n) && n >= 0 && n <= 1e9 ? n : 0; };
+// Keeps only what the homepage can display: max 4 plans, 10 features each, plain text only.
+function cleanPricing(b) {
+  b = b && typeof b === "object" ? b : {};
+  const plans = (Array.isArray(b.plans) ? b.plans : []).filter((p) => p && txt(p.name, 40)).slice(0, 4).map((p, i) => ({
+    id: "p" + (i + 1), name: txt(p && p.name, 40), desc: txt(p && p.desc, 120),
+    monthly: price(p && p.monthly), yearly: price(p && p.yearly),
+    features: (Array.isArray(p && p.features) ? p.features : []).map((f) => txt(f, 90)).filter(Boolean).slice(0, 10),
+    featured: !!(p && p.featured),
+  }));
+  let seen = false;   // only one highlighted plan
+  plans.forEach((p) => { if (p.featured && seen) p.featured = false; seen = seen || p.featured; });
+  return { currency: CURRENCIES.includes(b.currency) ? b.currency : "DZD", plans };
+}
 
 function withBrand(handler, env, fetchFn) {
   const DEFAULT = (env.PLATFORM_NAME || "Nardjis").trim() || "Nardjis";
@@ -74,17 +93,4 @@ function withBrand(handler, env, fetchFn) {
         cache = { name, at: Date.now() };
         return json(res, 200, { ok: true, name });
       }
-      // daily reports are plain text built with the default name: swap in the current one
-      if (op === "report" || op === "m_report") {
-        const name = await getName();
-        if (name !== "Nardjis") {
-          const end = res.end.bind(res);
-          res.end = (chunk, ...a) => end(typeof chunk === "string" ? chunk.split("Nardjis").join(name) : chunk, ...a);
-        }
-      }
-    } catch (e) { console.error("[brand]", e && e.message); }
-    return handler(req, res);
-  };
-}
-
-module.exports = { withBrand };
+      if (op === "pricing" && req.method !==
