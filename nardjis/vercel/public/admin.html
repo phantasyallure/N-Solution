@@ -906,6 +906,7 @@ fr:{
  ad_security:"Sécurité", ad_appearance:"Apparence", ad_data:"Données",
  ad_platform:"Nom de la plateforme", ad_support:"E-mail support",
  ad_tz:"Fuseau horaire", ad_currency:"Devise",
+ ad_pricing:"Tarifs", pr_h:"Tarifs affichés sur la page d’accueil", pr_sub:"Ces formules apparaissent dans la section « Tarifs » de la page d’accueil, avec un choix mensuel / annuel. Laissez la liste vide pour masquer la section.", pr_cur:"Devise", pr_plan:"Formule", pr_name:"Nom", pr_desc:"Description courte", pr_mon:"Prix mensuel", pr_yr:"Prix annuel (total / an)", pr_feat:"Caractéristiques (une par ligne)", pr_hot:"Mettre en avant (Populaire)", pr_add:"Ajouter une formule", pr_rm:"Supprimer", pr_save:"Enregistrer les tarifs", pr_saved:"Tarifs enregistrés", pr_empty:"Aucune formule : la section Tarifs est masquée sur la page d’accueil.", pr_max:"4 formules maximum", pr_name_req:"Donnez un nom à chaque formule", pr_setup:"Table nj_settings manquante : exécutez le SQL dans Supabase", pr_auth:"Reconnectez-vous", pr_err:"Erreur : tarifs non enregistrés", pr_view:"Voir la page d’accueil", pr_yr_hint:"Mettez 0 pour ne pas proposer l’annuel sur cette formule. Un prix à 0 s’affiche « Sur devis ».",
  ad_billing_h:"Formules par défaut", ad_monthly:"Prix mensuel",
  ad_yearly:"Prix annuel", ad_trial_j:"Essai (jours)", ad_ai_h:"Assistant IA",
  ad_ai_on:"Activer l’assistant IA", ad_model:"Modèle Gemini",
@@ -1094,6 +1095,7 @@ en:{
  ad_security:"Security", ad_appearance:"Appearance", ad_data:"Data",
  ad_platform:"Platform name", ad_support:"Support e-mail",
  ad_tz:"Timezone", ad_currency:"Currency",
+ ad_pricing:"Pricing", pr_h:"Prices shown on the homepage", pr_sub:"These plans appear in the “Pricing” section of the homepage with a monthly / annual switch. Leave the list empty to hide the section.", pr_cur:"Currency", pr_plan:"Plan", pr_name:"Name", pr_desc:"Short description", pr_mon:"Monthly price", pr_yr:"Annual price (total / year)", pr_feat:"Features (one per line)", pr_hot:"Highlight (Popular)", pr_add:"Add a plan", pr_rm:"Remove", pr_save:"Save pricing", pr_saved:"Pricing saved", pr_empty:"No plans: the pricing section is hidden on the homepage.", pr_max:"4 plans maximum", pr_name_req:"Give every plan a name", pr_setup:"Table nj_settings is missing: run the SQL in Supabase", pr_auth:"Please sign in again", pr_err:"Error: pricing not saved", pr_view:"View homepage", pr_yr_hint:"Use 0 to not offer annual billing on this plan. A price of 0 shows “On quote”.",
  ad_billing_h:"Default plans", ad_monthly:"Monthly price",
  ad_yearly:"Yearly price", ad_trial_j:"Trial (days)", ad_ai_h:"AI assistant",
  ad_ai_on:"Enable the AI assistant", ad_model:"Gemini model",
@@ -1279,6 +1281,7 @@ ar:{
  ad_security:"الأمان", ad_appearance:"المظهر", ad_data:"البيانات",
  ad_platform:"اسم المنصة", ad_support:"بريد الدعم",
  ad_tz:"المنطقة الزمنية", ad_currency:"العملة",
+ ad_pricing:"الأسعار", pr_h:"الأسعار المعروضة في الصفحة الرئيسية", pr_sub:"تظهر هذه الباقات في قسم «الأسعار» بالصفحة الرئيسية مع خيار شهري / سنوي. اترك القائمة فارغة لإخفاء القسم.", pr_cur:"العملة", pr_plan:"الباقة", pr_name:"الاسم", pr_desc:"وصف قصير", pr_mon:"السعر الشهري", pr_yr:"السعر السنوي (المجموع / سنة)", pr_feat:"المزايا (واحدة في كل سطر)", pr_hot:"إبراز (الأكثر طلبًا)", pr_add:"إضافة باقة", pr_rm:"حذف", pr_save:"حفظ الأسعار", pr_saved:"تم حفظ الأسعار", pr_empty:"لا توجد باقات: قسم الأسعار مخفي في الصفحة الرئيسية.", pr_max:"4 باقات كحد أقصى", pr_name_req:"أعطِ اسمًا لكل باقة", pr_setup:"جدول nj_settings غير موجود: شغّل SQL في Supabase", pr_auth:"أعد تسجيل الدخول", pr_err:"خطأ: لم تُحفظ الأسعار", pr_view:"عرض الصفحة الرئيسية", pr_yr_hint:"ضع 0 لعدم تقديم الاشتراك السنوي في هذه الباقة. السعر 0 يظهر «حسب الطلب».",
  ad_billing_h:"الباقات الافتراضية", ad_monthly:"السعر الشهري",
  ad_yearly:"السعر السنوي", ad_trial_j:"تجريبي (أيام)", ad_ai_h:"المساعد الذكي",
  ad_ai_on:"تفعيل المساعد الذكي", ad_model:"نموذج Gemini",
@@ -1555,7 +1558,7 @@ async function api(path, opt){
 /* ============================================================
    Navigation
    ============================================================ */
-const SYS = [["general","admin","ad_general","admin"],["billing","card","ad_billing","billing"],["ai","ai","ad_ai","admin"],
+const SYS = [["general","admin","ad_general","admin"],["billing","card","ad_billing","billing"],["pricing","spark","ad_pricing","admin"],["ai","ai","ad_ai","admin"],
   ["notify","bell","ad_notify","admin"],["security","shield","ad_security","admin"],["appearance","palette","ad_appearance","admin"],["data","db","ad_data","admin"]];
 const NAV = [
   {g:"grp_main", items:[
@@ -3120,6 +3123,63 @@ function textF(id, val, type, extra){
 function checkF(id, on){
   return `<button class="switch ${on?"on":""}" id="${id}" role="switch" aria-checked="${!!on}"></button>`;
 }
+/* ---------- Pricing editor (public homepage) ---------- */
+let PR = null;
+async function drawPricing(){
+  $("aBody").innerHTML = `<div class="card"><div class="skel" style="height:120px"></div></div>`;
+  try { const r = await fetch("/api?op=pricing"); PR = await r.json(); } catch(e){ PR = {currency:"DZD", plans:[]}; }
+  if (!PR || !Array.isArray(PR.plans)) PR = {currency:"DZD", plans:[]};
+  if (aTab === "pricing") paintPricing();
+}
+function readPricing(){
+  const plans = [...document.querySelectorAll("[data-pl]")].map(el => ({
+    name: el.querySelector(".pn").value, desc: el.querySelector(".pd").value,
+    monthly: +el.querySelector(".pm").value || 0, yearly: +el.querySelector(".py").value || 0,
+    features: el.querySelector(".pf").value.split(/\r?\n/).map(x => x.trim()).filter(Boolean),
+    featured: el.querySelector(".switch").classList.contains("on")}));
+  return {currency: $("prCur").value, plans};
+}
+function paintPricing(){
+  const cur = PR.currency || "DZD";
+  const card = (p, i) => `<div class="card" data-pl="${i}"><div class="card-h"><h3>${esc(t("pr_plan"))} ${i+1}</h3>
+      <button class="btn red sm" data-rm="${i}">${ico("trash","sm")} ${esc(t("pr_rm"))}</button></div>
+    <div class="grid g3">
+      ${fld(t("pr_name"), `<input class="inp pn" maxlength="40" value="${esc(p.name)}">`)}
+      ${fld(t("pr_mon"), `<input class="inp pm" type="number" min="0" step="any" value="${esc(p.monthly)}">`)}
+      ${fld(t("pr_yr"), `<input class="inp py" type="number" min="0" step="any" value="${esc(p.yearly)}">`, t("pr_yr_hint"))}
+    </div>
+    <div class="grid g2" style="margin-top:12px">
+      ${fld(t("pr_desc"), `<input class="inp pd" maxlength="120" value="${esc(p.desc)}">`)}
+      ${fld(t("pr_feat"), `<textarea class="inp pf" rows="5" maxlength="900">${esc((p.features||[]).join("\n"))}</textarea>`)}
+    </div>
+    <div class="row" style="margin-top:12px;gap:10px;align-items:center">${checkF("pf"+i, p.featured)}<span>${esc(t("pr_hot"))}</span></div></div>`;
+  $("aBody").innerHTML = `<div class="stack">
+    <div class="card"><div class="card-h"><h3>${esc(t("pr_h"))}</h3></div>
+      <p class="muted" style="font-size:13px;margin-bottom:12px">${esc(t("pr_sub"))}</p>
+      <div class="grid g3">${fld(t("pr_cur"), `<select class="inp" id="prCur">${["DZD","EUR","USD","MAD","TND"].map(c => `<option ${cur===c?"selected":""}>${c}</option>`).join("")}</select>`)}</div></div>
+    ${PR.plans.length ? PR.plans.map(card).join("") : `<div class="card"><p class="muted">${esc(t("pr_empty"))}</p></div>`}
+    <div class="row" style="gap:10px;flex-wrap:wrap">
+      <button class="btn ghost" id="prAdd" ${PR.plans.length>=4?"disabled":""}>${ico("plus","sm")} ${esc(t("pr_add"))}</button>
+      <button class="btn" id="prSave">${ico("check","sm")} ${esc(t("pr_save"))}</button>
+      <a class="btn ghost" href="/#tarifs" target="_blank" rel="noopener">${esc(t("pr_view"))}</a></div></div>`;
+  document.querySelectorAll("[data-pl] .switch").forEach(b => b.onclick = () => {
+    const on = !b.classList.contains("on");
+    document.querySelectorAll("[data-pl] .switch").forEach(x => { x.classList.remove("on"); x.setAttribute("aria-checked", "false"); });
+    if (on){ b.classList.add("on"); b.setAttribute("aria-checked", "true"); }});
+  $("prAdd").onclick = () => { PR = readPricing(); if (PR.plans.length >= 4) return toast(t("pr_max"));
+    PR.plans.push({name:"", desc:"", monthly:ST.settings.monthly||0, yearly:ST.settings.yearly||0, features:[], featured:false}); paintPricing(); };
+  document.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { PR = readPricing(); PR.plans.splice(+b.dataset.rm, 1); paintPricing(); });
+  $("prSave").onclick = async () => {
+    const d = readPricing();
+    if (d.plans.some(p => !p.name.trim())) return toast(t("pr_name_req"));
+    try {
+      const r = await fetch("/api?op=pricing_set", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(d)});
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "err");
+      PR = j; toast(t("pr_saved")); paintPricing();
+    } catch(e){ toast(e.message === "setup" ? t("pr_setup") : e.message === "auth" ? t("pr_auth") : t("pr_err")); }
+  };
+}
 function drawAdmin(){
   const s = ST.settings, body = $("aBody");
   const sec = (title, inner) => `<div class="card"><div class="card-h"><h3>${esc(title)}</h3></div>${inner}</div>`;
@@ -3151,6 +3211,7 @@ function drawAdmin(){
       </tbody></table></div></div>`;
     bindSave([["sMon","monthly","num"],["sYr","yearly","num"],["sTrial","trial","num"]], () => { O.restaurants.forEach(r => { const su = ST.subs[r.id]; if (su) su.price = su.plan==="yearly"?ST.settings.yearly:ST.settings.monthly; }); saveStore(); });
   }
+  else if (aTab === "pricing"){ drawPricing(); }
   else if (aTab === "ai"){
     body.innerHTML = `<div class="stack">${sec(t("ad_ai_h"), `
       <div class="row" style="justify-content:space-between;padding:4px 0">
