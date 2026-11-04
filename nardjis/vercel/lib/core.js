@@ -373,7 +373,7 @@ function createHandler({ env, fetch: fetchFn }) {
       return send(404, { error: "unknown op" });
     } catch (e) {
       console.error("[nardjis]", e && e.message);
-      return send(502, { error: "backend", detail: String(e && e.message) });
+      return send(502, { error: "backend" });
     }
   };
 }
