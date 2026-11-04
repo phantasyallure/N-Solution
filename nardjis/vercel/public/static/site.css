@@ -74,32 +74,48 @@ h1.t{font-size:32px;letter-spacing:-.02em}h2{font-size:19px;margin-bottom:6px}.m
 @media(max-width:760px){.ft-in{grid-template-columns:1fr 1fr;padding:32px 16px 22px;gap:26px 20px}.ft-brand{grid-column:1/-1}.ft-bar{padding:14px 16px}}
 
 /* Pricing (homepage) */
-.pricing{background:#fff;border-top:1px solid var(--line)}
-.pricing .wrap{padding-top:56px;padding-bottom:56px;text-align:center}
-.pricing h2{font-size:28px;letter-spacing:-.02em;margin:0}.pricing .lead{color:var(--mute);margin:8px auto 0;max-width:56ch}
-.bill{display:inline-flex;background:rgba(16,45,80,.08);border-radius:99px;padding:4px;margin:22px 0 6px}
-.bill button{border:0;background:none;font:600 14px inherit;color:var(--mute);padding:8px 20px;border-radius:99px;cursor:pointer}
-.bill button.on{background:var(--navy);color:#fff}.bill small{font-weight:700;color:var(--orange);margin-inline-start:6px}
-.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:22px;text-align:start;align-items:stretch}
-.plan-c{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:26px 22px;display:flex;flex-direction:column}
-.plan-c.hot{background:#fff;border:2px solid var(--orange);box-shadow:0 24px 50px -28px rgba(16,45,80,.55)}
-.plan-c .tag{position:absolute;top:-12px;inset-inline-start:22px;background:var(--orange);color:var(--navy);font-size:11.5px;font-weight:700;padding:3px 12px;border-radius:99px}
-.plan-c h3{font-size:18px}.plan-c .d{color:var(--mute);font-size:14px;margin-top:4px;min-height:2.6em}
-.plan-c .pr{margin-top:14px;font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1.1}.plan-c .pr span{font-size:14px;font-weight:500;color:var(--mute);letter-spacing:0}
-.plan-c .sv{font-size:12.5px;color:var(--ok);font-weight:600;min-height:1.4em;margin-top:2px}
-.plan-c ul{list-style:none;padding:0;margin:16px 0 22px;display:grid;gap:9px;font-size:14px;flex:1}
-.plan-c li{padding-inline-start:24px;position:relative}.plan-c li::before{content:"";position:absolute;inset-inline-start:0;top:.35em;width:14px;height:8px;border-left:2.5px solid var(--teal);border-bottom:2.5px solid var(--teal);transform:rotate(-45deg) scale(.9)}
-.plan-c .btn{width:100%}.plan-c.hot .btn{background:var(--orange);color:var(--navy);font-weight:700}
 
-/* pricing section (homepage) */
-.pricing{scroll-margin-top:70px}.pricing[hidden]{display:none}
-.bill{display:inline-flex;gap:4px;padding:4px;margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px}
-.bill button{border:0;background:transparent;font:600 13px inherit;font-family:inherit;padding:8px 16px;border-radius:9px;cursor:pointer;color:var(--mute)}
-.bill button.on{background:var(--navy);color:#fff}
-.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:22px}
-.plan{position:relative;display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px}
-.plan.hot{border:2px solid var(--teal);box-shadow:0 24px 60px -30px rgba(16,45,80,.5)}
-.plan h3{margin:0;font-size:18px}.plan p{margin:0;font-size:14px}
-.plan .badge{position:absolute;top:-12px;right:16px;background:var(--teal);color:#fff;font:700 12px inherit;font-family:inherit;padding:4px 10px;border-radius:999px}
-.plan .price b{font-size:26px;letter-spacing:-.02em}.plan .price small{color:var(--mute);margin-left:4px}
-.plan ul{margin:0;padding:0 0 0 18px;display:grid;gap:6px;font-size:14px;flex:1}
+/* ===== Pricing (homepage) ===== */
+.pricing{position:relative;overflow:hidden;color:#fff;scroll-margin-top:64px;border-top:1px solid rgba(255,255,255,.08);
+  background:radial-gradient(900px 420px at 15% -10%,rgba(0,184,176,.28),transparent 60%),radial-gradient(800px 420px at 90% 110%,rgba(255,165,31,.18),transparent 60%),linear-gradient(180deg,#0b1b30,#102d50)}
+.pricing .wrap{padding-top:84px;padding-bottom:92px;text-align:center;position:relative}
+.pricing .eyebrow{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);background:rgba(0,184,176,.12);border:1px solid rgba(0,184,176,.35);padding:6px 14px;border-radius:99px}
+.pricing h2{font-size:clamp(28px,4.4vw,42px);letter-spacing:-.03em;line-height:1.12;margin:18px 0 0;color:#fff}
+.pricing .lead{color:rgba(255,255,255,.72);margin:14px auto 0;max-width:54ch;font-size:17px}
+.bill{display:inline-flex;position:relative;margin:34px 0 8px;padding:5px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(10px)}
+.bill button{position:relative;z-index:1;border:0;background:none;font:600 14px inherit;font-family:inherit;color:rgba(255,255,255,.75);padding:10px 24px;border-radius:99px;cursor:pointer;transition:color .2s,background .2s;display:inline-flex;align-items:center;gap:8px}
+.bill button.on{background:#fff;color:var(--navy);box-shadow:0 6px 18px -6px rgba(0,0,0,.5)}
+.bill small{font-size:11px;font-weight:800;color:var(--navy);background:var(--orange);padding:2px 8px;border-radius:99px}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,340px));justify-content:center;gap:24px;margin-top:46px;text-align:start;align-items:stretch}
+.plan-c{position:relative;display:flex;flex-direction:column;padding:32px 28px 28px;border-radius:24px;
+  background:linear-gradient(160deg,rgba(255,255,255,.11),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.16);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 30px 60px -30px rgba(0,0,0,.6);
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,border-color .3s;opacity:0;animation:planIn .6s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i,0)*110ms)}
+.plan-c:hover{transform:translateY(-8px);border-color:rgba(0,184,176,.6);box-shadow:0 40px 70px -30px rgba(0,184,176,.35)}
+.plan-c.hot{background:linear-gradient(#12294a,#0e2342) padding-box,linear-gradient(140deg,var(--orange),#ff6b3d 45%,var(--teal)) border-box;border:2px solid transparent;
+  transform:scale(1.045);box-shadow:0 40px 80px -30px rgba(255,165,31,.45),0 0 0 6px rgba(255,165,31,.07)}
+.plan-c.hot:hover{transform:scale(1.045) translateY(-8px)}
+.plan-c .tag{position:absolute;top:-15px;left:50%;transform:translateX(-50%);white-space:nowrap;background:linear-gradient(90deg,var(--orange),#ff8a3d);color:var(--navy);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:6px 16px;border-radius:99px;box-shadow:0 10px 24px -8px rgba(255,165,31,.7)}
+.plan-c h3{font-size:20px;font-weight:700;color:#fff;margin:0}
+.plan-c .d{color:rgba(255,255,255,.68);font-size:14.5px;margin-top:6px;min-height:2.8em}
+.plan-c .pr{margin-top:18px;display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 8px;color:#fff;line-height:1}
+.plan-c .pr b{font-size:clamp(34px,4.6vw,46px);font-weight:800;letter-spacing:-.04em}
+.plan-c .pr .cu{font-size:15px;font-weight:700;color:var(--teal)}
+.plan-c .pr .pe{font-size:14px;font-weight:500;color:rgba(255,255,255,.6)}
+.plan-c .pr.q b{font-size:32px}
+.plan-c .sv{min-height:24px;margin-top:10px;font-size:13px;font-weight:600;color:rgba(255,255,255,.62)}
+.plan-c .sv em{font-style:normal;font-weight:800;color:#5ff0c3;background:rgba(95,240,195,.12);padding:3px 9px;border-radius:99px;margin-inline-end:6px}
+.plan-c hr{border:0;height:1px;margin:20px 0 4px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent)}
+.plan-c ul{list-style:none;padding:0;margin:16px 0 28px;display:grid;gap:13px;font-size:14.5px;flex:1;color:rgba(255,255,255,.9)}
+.plan-c li{position:relative;padding-inline-start:30px;line-height:1.45}
+.plan-c li::before{content:"";position:absolute;inset-inline-start:0;top:1px;width:20px;height:20px;border-radius:50%;background:rgba(0,184,176,.2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300e0d6' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/12px no-repeat}
+.plan-c.hot li::before{background-color:rgba(255,165,31,.2);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffa51f' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E")}
+.plan-c .btn{width:100%;min-height:50px;border-radius:14px;font-size:15px;font-weight:700;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.28);transition:transform .2s,background .2s,box-shadow .2s}
+.plan-c .btn:hover{background:#fff;color:var(--navy);transform:translateY(-2px)}
+.plan-c.hot .btn{background:linear-gradient(90deg,var(--orange),#ff8a3d);color:var(--navy);border:0;box-shadow:0 16px 30px -12px rgba(255,165,31,.75)}
+.plan-c.hot .btn:hover{background:linear-gradient(90deg,#ffb84a,#ff9a55);color:var(--navy);box-shadow:0 20px 36px -12px rgba(255,165,31,.9)}
+@keyframes planIn{from{opacity:0;transform:translateY(26px)}to{opacity:1}}
+.plan-c.hot{animation-name:planInHot}
+@keyframes planInHot{from{opacity:0;transform:scale(1.045) translateY(26px)}to{opacity:1;transform:scale(1.045)}}
+@media(max-width:760px){.plan-c.hot,.plan-c.hot:hover{transform:none}.plans{gap:30px}.pricing .wrap{padding-top:64px;padding-bottom:70px}@keyframes planInHot{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}}
+@media(prefers-reduced-motion:reduce){.plan-c,.plan-c.hot{animation:none;opacity:1}.plan-c:hover{transform:none}}
