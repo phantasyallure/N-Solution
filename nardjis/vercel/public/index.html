@@ -20,9 +20,10 @@
 <div class="err"></div><button class="btn">Créer mon compte</button>
 <p class="muted" style="font-size:12px">En créant un compte, vous acceptez notre <a href="/privacy">politique de confidentialité</a>.</p></form></div></section></main>
 <section class="pricing" id="tarifs" hidden><div class="wrap">
-<h2 style="font-size:28px;letter-spacing:-.02em;margin:0">Tarifs</h2>
-<p class="lead">Des formules simples, sans engagement caché.</p>
-<div class="bill" id="bill" hidden><button class="on" data-b="m">Mensuel</button><button data-b="y">Annuel</button></div>
+<span class="eyebrow">Tarifs</span>
+<h2>Choisissez la formule faite pour votre salle</h2>
+<p class="lead">Des formules simples et transparentes, sans engagement caché.</p>
+<div class="bill" id="bill" hidden><button class="on" data-b="m">Mensuel</button><button data-b="y">Annuel<small id="bsv" hidden></small></button></div>
 <div class="plans" id="plans"></div></div></section>
 <section class="about" id="apropos"><div class="wrap prose"><h2 style="font-size:28px;letter-spacing:-.02em;margin:0">À propos de Nardjis</h2>
 <p class="lead">Nardjis aide les restaurants et les cafés à garder leur salle sous contrôle, sans alourdir le travail de l’équipe.</p>
@@ -45,24 +46,30 @@ try{const r=await fetch("/api?op="+op,{method:"POST",headers:{"Content-Type":"ap
 if(r.ok)return location.href=op==="e_login"?"/staff":"/app";const j=await r.json().catch(()=>({}));er.textContent=op==="e_login"&&j.error==="bad_login"?"Identifiant ou code incorrect.":MSG[j.error]||"Erreur, réessayez."}catch{er.textContent="Connexion impossible."}b.disabled=false};
 </script><script>
 (async()=>{
-const box=document.getElementById("plans"),sec=document.getElementById("tarifs"),bill=document.getElementById("bill");
+const box=document.getElementById("plans"),sec=document.getElementById("tarifs"),bill=document.getElementById("bill"),bsv=document.getElementById("bsv");
 let D;try{const r=await fetch("/api?op=pricing",{cache:"no-store"});if(!r.ok)return;D=await r.json()}catch{return}
 if(!D||!Array.isArray(D.plans)||!D.plans.length)return;
-const cur=D.currency||"DZD",fmt=n=>new Intl.NumberFormat("fr-FR",{maximumFractionDigits:2}).format(n)+" "+cur;
-const hasYear=D.plans.some(p=>p.yearly>0);let mode="m";
+const cur=D.currency||"DZD",nf=new Intl.NumberFormat("fr-FR",{maximumFractionDigits:2}),num=n=>nf.format(n).replace(/\u202f|\u00a0/g," ");
+const sav=p=>p.monthly>0&&p.yearly>0?Math.round(100-p.yearly/(p.monthly*12)*100):0;
+const best=Math.max(0,...D.plans.map(sav));let mode="m";
 const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 function draw(){box.textContent="";
-D.plans.forEach(p=>{const c=el("div","plan"+(p.featured?" hot":""));
-if(p.featured)c.appendChild(el("span","badge","Populaire"));
-c.appendChild(el("h3",null,p.name));if(p.desc)c.appendChild(el("p","muted",p.desc));
-let v=mode==="y"?p.yearly:p.monthly,per=mode==="y"?" / an":" / mois";
-if(!(v>0)){const o=mode==="y"?p.monthly:p.yearly;if(o>0){v=o;per=mode==="y"?" / mois":" / an"}}
-const pr=el("div","price");
-if(v>0){pr.appendChild(el("b",null,fmt(v)));pr.appendChild(el("small",null,per))}else pr.appendChild(el("b",null,"Sur devis"));
+D.plans.forEach((p,i)=>{const c=el("div","plan-c"+(p.featured?" hot":""));c.style.setProperty("--i",i);
+if(p.featured)c.appendChild(el("span","tag","★ Le plus populaire"));
+c.appendChild(el("h3",null,p.name));c.appendChild(el("p","d",p.desc||""));
+let v=mode==="y"?p.yearly:p.monthly,per=mode==="y"?"/ an":"/ mois";
+if(!(v>0)){const o=mode==="y"?p.monthly:p.yearly;if(o>0){v=o;per=mode==="y"?"/ mois":"/ an"}}
+const pr=el("div","pr"+(v>0?"":" q"));
+if(v>0){pr.appendChild(el("b",null,num(v)));pr.appendChild(el("span","cu",cur));pr.appendChild(el("span","pe",per))}else pr.appendChild(el("b",null,"Sur devis"));
 c.appendChild(pr);
-if(p.features.length){const ul=el("ul");p.features.forEach(f=>ul.appendChild(el("li",null,f)));c.appendChild(ul)}
-const a=el("a","btn"+(p.featured?"":" ghost"),"Commencer");a.href="#signup";c.appendChild(a);box.appendChild(c)})}
-if(hasYear){bill.hidden=false;bill.querySelectorAll("button").forEach(b=>b.onclick=()=>{mode=b.dataset.b;bill.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));draw()})}
+const sv=el("div","sv");
+if(mode==="y"&&p.yearly>0){const s=sav(p);if(s>0)sv.appendChild(el("em",null,"-"+s+" %"));sv.appendChild(document.createTextNode("soit "+num(Math.round(p.yearly/12))+" "+cur+" / mois"))}
+else if(mode==="m"&&p.monthly>0&&p.yearly>0&&sav(p)>0)sv.textContent="Passez à l’annuel : -"+sav(p)+" %";
+c.appendChild(sv);c.appendChild(document.createElement("hr"));
+if(p.features.length){const ul=el("ul");p.features.forEach(f=>ul.appendChild(el("li",null,f)));c.appendChild(ul)}else c.appendChild(el("ul"));
+const a=el("a","btn","Commencer");a.href="#signup";c.appendChild(a);box.appendChild(c)})}
+if(D.plans.some(p=>p.yearly>0)){bill.hidden=false;if(best>0){bsv.hidden=false;bsv.textContent="-"+best+" %"}
+bill.querySelectorAll("button").forEach(b=>b.onclick=()=>{mode=b.dataset.b;bill.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));draw()})}
 draw();sec.hidden=false;
 if(location.hash==="#tarifs")sec.scrollIntoView();
 })();
