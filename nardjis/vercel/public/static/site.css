@@ -39,7 +39,6 @@ input:focus,select:focus{outline:2px solid rgba(0,184,176,.45);border-color:var(
 .sec{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:22px}.sec .card{background:#fff}
 h1.t{font-size:32px;letter-spacing:-.02em}h2{font-size:19px;margin-bottom:6px}.muted{color:var(--mute)}
 .prose h2{margin-top:26px}.prose p,.prose li{color:#3a4a5e;margin-top:8px}.prose ul{padding-left:20px}
-footer{padding:18px 28px;border-top:1px solid var(--line);background:rgba(244,247,250,.94);display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--mute)}
 .hero-logo{display:block;width:clamp(120px,30vw,200px);height:auto;margin-bottom:14px;filter:drop-shadow(0 8px 24px rgba(8,22,40,.45))}
 .login{background:rgba(11,27,48,.58);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:18px 20px 20px;color:#fff;width:100%;max-width:420px;justify-self:end}
 .ltabs{display:flex;gap:20px;border-bottom:1px solid rgba(255,255,255,.18);margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
