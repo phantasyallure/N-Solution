@@ -1,0 +1,21 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Mes alertes — Nardjis</title><link rel="icon" href="/static/favicon.png"><link rel="apple-touch-icon" href="/static/apple-touch-icon.png"><script src="/static/brand.js"></script><meta name="theme-color" content="#102D50"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/static/site.css">
+<style>.al{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);border-left:7px solid var(--c);border-radius:14px;padding:16px;margin-top:12px}.al b{font-size:24px;display:block;line-height:1.2}.al small{color:var(--mute);font-size:14px}.al em{margin-left:auto;font:700 24px inherit;font-style:normal;font-variant-numeric:tabular-nums}.calm{text-align:center;padding:56px 10px;color:var(--mute)}.calm div{font-size:46px;color:var(--ok)}</style></head>
+<body><header class="hdr"><b id="rn">Nardjis</b><span class="sp"></span><button class="btn ghost sm" id="out">Déconnexion</button></header>
+<main class="wrap" style="max-width:560px;padding-top:20px"><p class="muted" id="hi"></p><button class="btn ghost sm" id="en" style="margin-top:8px" hidden>🔔 Activer le son et les notifications</button><div id="v"></div></main>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])),mm=s=>{s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+let seen=new Set(),first=true,ctx;
+const beep=()=>{try{ctx=ctx||new(window.AudioContext||webkitAudioContext)();const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.value=.25;o.start();o.stop(ctx.currentTime+.3)}catch{}};
+const ping=t=>{navigator.vibrate&&navigator.vibrate([200,100,200]);beep();if("Notification"in window&&Notification.permission==="granted")new Notification("Nardjis",{body:t})};
+if(!("Notification"in window)||Notification.permission!=="granted")$("#en").hidden=false;
+$("#en").onclick=async()=>{beep();if("Notification"in window)await Notification.requestPermission();$("#en").hidden=true};
+$("#out").onclick=async()=>{await fetch("/api?op=e_logout",{method:"POST"});location.href="/"};
+async function tick(){let r;try{r=await fetch("/api?op=e_state")}catch{return}
+  if(r.status===401)return location.href="/";if(!r.ok)return;const s=await r.json();
+  $("#rn").textContent=s.restaurant||"Nardjis";$("#hi").textContent="Bonjour "+s.name;
+  const key=a=>a.table+":"+a.kind;
+  if(!first)s.alerts.filter(a=>!seen.has(key(a))).forEach(a=>ping(a.table+" : "+(a.kind==="waiting"?"client en attente":"à nettoyer")));
+  seen=new Set(s.alerts.map(key));first=false;
+  $("#v").innerHTML=s.alerts.length?[...s.alerts].sort((a,b)=>b.seconds-a.seconds).map(a=>`<div class="al" style="--c:${a.level==="critical"?"#b3261e":a.kind==="waiting"?"#d98a1b":"#5b6b7f"}"><div><b>${esc(a.table)}</b><small>${a.kind==="waiting"?"Client en attente":"À nettoyer"}</small></div><em>${mm(a.seconds)}</em></div>`).join(""):`<div class="calm"><div>✓</div><p>Tout est calme.</p>${s.online?"":"<p>Système caméra hors ligne.</p>"}</div>`}
+tick();setInterval(tick,3000);
+</script></body></html>
