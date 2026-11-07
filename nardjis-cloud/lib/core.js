@@ -202,8 +202,53 @@ function createHandler({ env, fetch: fetchFn }) {
     if (!b || !sig || !msecret || !same(sig, mSig(b))) return null;
     try { const p = JSON.parse(Buffer.from(b, "base64url")); return p.exp > Date.now() ? p : null; } catch { return null; }
   };
+  /* ---------- pairing: the Windows app proves itself with the establishment ID + a pairing code ----------
+     The app never sees the Supabase key: it sends numbers to this server, which writes for that one restaurant only. */
+  const PAIR_ALPH = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const pairCode = (rid, ver) => {
+    const h = crypto.createHmac("sha256", msecret).update(`pair:${rid}:${ver}`).digest();
+    let o = ""; for (let i = 0; i < 12; i++) o += PAIR_ALPH[h[i] % 32];
+    return o.replace(/(.{4})(?=.)/g, "$1-");
+  };
+  const normCode = (c) => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  async function pairInfo(rid) {
+    let r;
+    try { r = await sb(`nj_restaurants?select=id,name,pair_ver&id=eq.${encodeURIComponent(rid)}`); }
+    catch { r = await sb(`nj_restaurants?select=id,name&id=eq.${encodeURIComponent(rid)}`); }   // pair_ver column not added yet
+    return r.length ? { name: r[0].name, ver: r[0].pair_ver || 1 } : null;
+  }
+  const clip = (v, n) => (v == null ? null : String(v).slice(0, n));
+  async function device(op, req, post, send) {
+    if (!post) return send(405, { error: "method" });
+    const ip = String(req.headers["x-forwarded-for"] || "?").split(",")[0].trim(), now = Date.now();
+    const f = (fails.get(ip + "d") || []).filter((t) => now - t < 60000);
+    if (f.length >= 10) return send(429, { error: "busy" });
+    const b = await readBody(req), rid = String(b.id || "").trim().toLowerCase();
+    const info = /^[a-z0-9][a-z0-9_-]{2,60}$/.test(rid) ? await pairInfo(rid) : null;
+    if (!info || !same(normCode(b.code), normCode(pairCode(rid, info.ver)))) {
+      f.push(now); fails.set(ip + "d", f);
+      return send(401, { error: "bad_pairing" });
+    }
+    if (op === "d_register") return send(200, { ok: true, name: info.name });
+    if (op !== "d_push") return send(404, { error: "unknown" });
+    const json = { "Content-Type": "application/json" };
+    const st = b.state;
+    if (st && typeof st === "object" && !Array.isArray(st) && JSON.stringify(st).length < 400000) {
+      const sm = b.summary && typeof b.summary === "object" && !Array.isArray(b.summary) ? b.summary : {};
+      await sb("nj_state?on_conflict=restaurant_id", { method: "POST", body: JSON.stringify([{ restaurant_id: rid, state: st, summary: sm }]),
+        headers: { ...json, Prefer: "resolution=merge-duplicates,return=minimal" } });
+    }
+    const evs = (Array.isArray(b.events) ? b.events : []).slice(0, 200).map((e) => ({
+      restaurant_id: rid, type: clip(e && e.type, 40), table_name: clip(e && e.table_name, 60), staff: clip(e && e.staff, 60),
+      seconds: e && Number.isFinite(+e.seconds) ? +e.seconds : null, notify: clip(e && e.notify, 40),
+    })).filter((e) => e.type);
+    if (evs.length) await sb("nj_events", { method: "POST", body: JSON.stringify(evs), headers: { ...json, Prefer: "return=minimal" } });
+    return send(200, { ok: true });
+  }
+
   async function manager(op, req, post, send) {
     if (!sbUrl || !sbKey || !msecret) return send(503, { error: "not_configured" });
+    if (op[0] === "d") return device(op, req, post, send);
     const secure = req.headers["x-forwarded-proto"] === "https" ? "; Secure" : "";
     const ck = (v, age, name = "msess") => ({ "Set-Cookie": `${name}=${v}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${age}${secure}` });
     const sess = (a) => ck(mSign({ aid: a.id, rid: a.restaurant_id }), 2592000);
@@ -260,6 +305,17 @@ function createHandler({ env, fetch: fetchFn }) {
     if (op === "m_me" && !post) {
       const [a] = await sb(`nj_accounts?select=business_name,business_type,city,manager_name,email,restaurant_id&id=eq.${E(s.aid)}`);
       return a ? send(200, { business_name: a.business_name, business_type: a.business_type, city: a.city, manager_name: a.manager_name, email: a.email, restaurant_id: a.restaurant_id }) : send(401, { error: "auth" });
+    }
+    if (op === "m_pair" && !post) {
+      const info = await pairInfo(s.rid);
+      return info ? send(200, { code: pairCode(s.rid, info.ver) }) : send(404, { error: "unknown" });
+    }
+    if (op === "m_pair_reset" && post) {
+      const info = await pairInfo(s.rid);
+      if (!info) return send(404, { error: "unknown" });
+      try { await sb(`nj_restaurants?id=eq.${E(s.rid)}`, { method: "PATCH", body: JSON.stringify({ pair_ver: info.ver + 1 }), headers: { "Content-Type": "application/json", Prefer: "return=minimal" } }); }
+      catch { return send(503, { error: "migration" }); }
+      return send(200, { code: pairCode(s.rid, info.ver + 1) });
     }
     if (op === "m_state" && !post) {
       const r = await sb(`nj_state?select=state,updated_at&${RID}`);
@@ -363,7 +419,7 @@ function createHandler({ env, fetch: fetchFn }) {
       const q = new URL(req.url, "http://x").searchParams;
       const op = q.get("op") || "";
       const post = req.method === "POST";
-      if (/^[me]_/.test(op)) return await manager(op, req, post, send);
+      if (/^[med]_/.test(op)) return await manager(op, req, post, send);
 
       if (op === "auth" && !post) return send(200, { required: true, ok: authed(req), configured: !!code });
       if (!code) return send(503, { error: "not_configured" });   // fail closed: never serve data without ACCESS_CODE
