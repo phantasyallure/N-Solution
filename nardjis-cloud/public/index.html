@@ -1,4 +1,4 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Espace établissements — Nardjis</title><link rel="icon" href="/static/favicon.png"><link rel="apple-touch-icon" href="/static/apple-touch-icon.png"><link rel="manifest" href="/static/manifest.json"><script src="/static/brand.js"></script><meta name="theme-color" content="#102D50"><meta name="description" content="Restaurants, cafés, cafétérias : suivez les attentes, le nettoyage et l’effort de votre équipe en temps réel."><meta property="og:type" content="website"><meta property="og:site_name" content="Nardjis"><meta property="og:title" content="Espace établissements — Nardjis"><meta property="og:description" content="Restaurants, cafés, cafétérias : suivez les attentes, le nettoyage et l’effort de votre équipe en temps réel."><meta property="og:image" content="https://nardjissolution.vercel.app/static/og.jpg"><meta property="og:image:type" content="image/jpeg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="675"><meta property="og:image:alt" content="Nardjis — Your Restaurant. Under Control."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Espace établissements — Nardjis"><meta name="twitter:description" content="Restaurants, cafés, cafétérias : suivez les attentes, le nettoyage et l’effort de votre équipe en temps réel."><meta name="twitter:image" content="https://nardjissolution.vercel.app/static/og.jpg"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/static/site.css"></head>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Espace établissements — Nardjis</title><link rel="icon" href="/static/favicon.png"><link rel="apple-touch-icon" href="/static/apple-touch-icon.png"><link rel="manifest" href="/static/manifest.json"><script src="/static/brand.js"></script><script src="/static/download.js"></script><meta name="theme-color" content="#102D50"><meta name="description" content="Restaurants, cafés, cafétérias : suivez les attentes, le nettoyage et l’effort de votre équipe en temps réel."><meta property="og:type" content="website"><meta property="og:site_name" content="Nardjis"><meta property="og:title" content="Espace établissements — Nardjis"><meta property="og:description" content="Restaurants, cafés, cafétérias : suivez les attentes, le nettoyage et l’effort de votre équipe en temps réel."><meta property="og:image" content="https://nardjissolution.vercel.app/static/og.jpg"><meta property="og:image:type" content="image/jpeg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="675"><meta property="og:image:alt" content="Nardjis — Your Restaurant. Under Control."><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Espace établissements — Nardjis"><meta name="twitter:description" content="Restaurants, cafés, cafétérias : suivez les attentes, le nettoyage et l’effort de votre équipe en temps réel."><meta name="twitter:image" content="https://nardjissolution.vercel.app/static/og.jpg"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/static/site.css"></head>
 <body class="bg"><div id="hdr"></div>
 <main class="wrap"><section class="hero"><div>
 <img class="hero-logo" src="/static/logo.png" alt="Nardjis" width="200" height="200">
@@ -25,6 +25,15 @@
 <p class="lead">Des formules simples et transparentes, sans engagement caché.</p>
 <div class="bill" id="bill" hidden><button class="on" data-b="m">Mensuel</button><button data-b="y">Annuel<small id="bsv" hidden></small></button></div>
 <div class="plans" id="plans"></div></div></section>
+<section class="about" id="telecharger" hidden><div class="wrap prose">
+<span class="eyebrow">Application</span>
+<h2 style="font-size:28px;letter-spacing:-.02em;margin:0">Téléchargez l’application pour Windows</h2>
+<p class="lead">Installez-la sur l’ordinateur de votre salle : elle trouve la caméra et relie tout à votre espace automatiquement.</p>
+<div class="sec">
+<div class="card"><h2>1. Installez</h2><p>Lancez le fichier téléchargé. Si Windows affiche un avertissement, cliquez sur « Informations complémentaires », puis « Exécuter quand même ».</p></div>
+<div class="card"><h2>2. Votre identifiant</h2><p>Créez votre compte, puis copiez l’identifiant de votre établissement (Mon compte) dans l’application.</p></div>
+<div class="card"><h2>3. Votre caméra</h2><p>Entrez l’adresse IP de la caméra et appuyez sur « Connect ». Vos tables apparaissent dans votre espace.</p></div></div>
+<p style="margin-top:22px"><a class="btn" id="dl" href="#" download>Télécharger pour Windows</a></p></div></section>
 <section class="about" id="apropos"><div class="wrap prose"><h2 style="font-size:28px;letter-spacing:-.02em;margin:0">À propos de Nardjis</h2>
 <p class="lead">Nardjis aide les restaurants et les cafés à garder leur salle sous contrôle, sans alourdir le travail de l’équipe.</p>
 <div class="sec">
@@ -73,5 +82,9 @@ bill.querySelectorAll("button").forEach(b=>b.onclick=()=>{mode=b.dataset.b;bill.
 draw();sec.hidden=false;
 if(location.hash==="#tarifs")sec.scrollIntoView();
 })();
+</script>
+<script>
+(()=>{const D=window.NARDJIS_DOWNLOAD||{};if(!D.url)return;const a=document.getElementById("dl");a.href=D.url;document.getElementById("telecharger").hidden=false;
+if(location.hash==="#telecharger")document.getElementById("telecharger").scrollIntoView()})();
 </script>
 </body></html>
