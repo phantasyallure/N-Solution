@@ -21,17 +21,31 @@ body{background:radial-gradient(900px 420px at 90% -8%,#cfeeed,transparent 70%),
 #v>*{animation:up .35s ease both}#v.still>*{animation:none}@keyframes up{from{opacity:0;transform:translateY(8px)}}
 .row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}.row label{flex:1;min-width:150px}code{background:#e6edf5;padding:3px 8px;border-radius:7px;font-weight:700}
 </style></head>
-<body><header class="hdr"><a class="brand" href="/"><img src="/static/emblem.png" alt="" onerror="this.remove()"><b id="bn">…</b></a><span class="chip" id="bt"></span><span class="sp"></span><button class="btn ghost sm" id="out">Déconnexion</button></header>
+<body><header class="hdr"><a class="brand" href="/"><img src="/static/emblem.png" alt="" onerror="this.remove()"><b id="bn">…</b></a><span class="chip" id="bt"></span><span class="sp"></span><a class="btn sm" id="dlh" href="#" download style="margin-right:8px">Télécharger l’app</a><button class="btn ghost sm" id="out">Déconnexion</button></header>
 <main class="wrap" style="padding-top:24px"><div class="hero2" id="hr"><h1>Bonjour</h1><p>Votre salle en un coup d’œil.</p></div><div class="tabs" id="tb" style="max-width:420px"><button data-t="room" class="on">Salle</button><button data-t="rep">Rapports</button><button data-t="staff">Employés</button><button data-t="acc">Compte</button></div><div id="v"></div></main>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])),mm=s=>{s=Math.max(0,Math.round(s||0));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
 const api=async(op,body)=>{const r=await fetch("/api?op="+op,body===undefined?{}:{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});if(r.status===401){location.href="/";throw 0}if(!r.ok)throw new Error("err");return r.json()};
 const SV={eye:'<circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/>',hourglass:'<path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',bell:'<path d="M6 9a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21h4"/>',users:'<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-5.5"/>',check:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',exit:'<path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/>',sparkle:'<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>',drop:'<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>',trend:'<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>'},I=n=>`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${SV[n]}</svg>`;
 const TYPES={restaurant:"Restaurant",cafeteria:"Cafétéria",other:"Autre"},ROLES={waiter:"Serveur",cleaner:"Nettoyage",cook:"Cuisine",manager:"Responsable",other:"Autre"},SL={free:"Libre",occupied:"Servi",waiting:"En attente",dirty:"À nettoyer"};
+(()=>{const a=document.getElementById("dlh"),u=(window.NARDJIS_DOWNLOAD||{}).url;
+  if(u)a.href=u;else{a.removeAttribute("href");a.removeAttribute("download");a.textContent="App Windows : bientôt disponible";a.style.opacity=".55";a.style.pointerEvents="none"}})();
 let ME,tab="room",timer,note="";
 const COL={occupied:"#17704a",waiting:"#d98a1b",dirty:"#5b6b7f"};
 let lastRoom="";
-const paint=h=>{const v=$("#v");if(h===lastRoom)return;v.classList.toggle("still",lastRoom!=="");lastRoom=h;v.innerHTML=h};
+function morph(a,b){
+  const A=[...a.childNodes],B=[...b.childNodes];
+  B.forEach((nb,i)=>{const na=A[i];
+    if(!na){a.appendChild(nb.cloneNode(true));return}
+    if(na.nodeType!==nb.nodeType||na.nodeName!==nb.nodeName){a.replaceChild(nb.cloneNode(true),na);return}
+    if(nb.nodeType===3){if(na.nodeValue!==nb.nodeValue)na.nodeValue=nb.nodeValue;return}
+    [...na.attributes].forEach(x=>{if(!nb.hasAttribute(x.name))na.removeAttribute(x.name)});
+    [...nb.attributes].forEach(x=>{if(na.getAttribute(x.name)!==x.value)na.setAttribute(x.name,x.value)});
+    morph(na,nb)});
+  while(a.childNodes.length>B.length)a.removeChild(a.lastChild)}
+const paint=h=>{const v=$("#v");if(h===lastRoom)return;const first=lastRoom==="";lastRoom=h;v.classList.toggle("still",!first);
+  if(first){v.innerHTML=h;return}
+  const t=document.createElement("div");t.innerHTML=h;morph(v,t)};
 async function room(){
   let s;try{s=await api("m_state")}catch{return}if(tab!=="room")return;
   if(s.waiting&&!s.tables){const D=window.NARDJIS_DOWNLOAD||{};return paint(`<div class="card" style="margin-top:16px"><h2>En attente de votre système caméra</h2><p class="muted">Votre salle apparaîtra ici dès que le système sera installé et connecté. Installez l’application sur l’ordinateur de votre salle, puis entrez cet identifiant et l’adresse IP de la caméra :</p><p style="margin-top:12px"><code>${esc(ME.restaurant_id)}</code></p>${D.url?`<p style="margin-top:16px"><a class="btn" href="${esc(D.url)}" download>Télécharger l’application pour Windows</a></p>`:""}</div>`)}
