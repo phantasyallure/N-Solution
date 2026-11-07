@@ -173,3 +173,57 @@ test("gemini(): bad key reports no_key", async () => {
   const f = fakeFetch([["generativelanguage", [400, { error: { message: "API key not valid" } }]]]);
   await assert.rejects(gemini(f, "bad", ["m"], "p"), (e) => e.code === "no_key");
 });
+
+/* ---------- pairing: the Windows app writes through the server, never with the Supabase key ---------- */
+const crypto = require("node:crypto");
+const PENV = { ...ENV, SESSION_SECRET: "sess-secret" };
+const mCookie = (rid) => {
+  const b = Buffer.from(JSON.stringify({ aid: 7, rid, exp: Date.now() + 1e6 })).toString("base64url");
+  return "msess=" + b + "." + crypto.createHmac("sha256", "sess-secret").update(b).digest("base64url");
+};
+function pairHandler() {
+  const f = fakeFetch([
+    ["nj_restaurants", () => [200, [{ id: "cafe-1a2b", name: "Café", pair_ver: 1 }]]],
+    ["nj_state", [201, null]], ["nj_events", [201, null]],
+  ]);
+  return { f, h: createHandler({ env: PENV, fetch: f }) };
+}
+
+test("pairing: manager sees a code; the app can push with it and only for that restaurant", async () => {
+  const { f, h } = pairHandler();
+  const code = (await call(h, { url: "/api?op=m_pair", cookie: mCookie("cafe-1a2b") })).json.code;
+  assert.match(code, /^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+  const reg = await call(h, { method: "POST", url: "/api?op=d_register", body: { id: "cafe-1a2b", code: code.toLowerCase().replace(/-/g, " ") } });
+  assert.equal(reg.status, 200); assert.equal(reg.json.name, "Café");
+  const push = await call(h, { method: "POST", url: "/api?op=d_push", body: { id: "cafe-1a2b", code, state: STATE, summary: { x: 1 },
+    events: [{ type: "served", table_name: "T1", seconds: 90, restaurant_id: "someone-else" }, { nope: 1 }] } });
+  assert.equal(push.status, 200);
+  const st = f.calls.find((c) => c.url.includes("nj_state?on_conflict=restaurant_id"));
+  assert.equal(JSON.parse(st.opt.body)[0].restaurant_id, "cafe-1a2b");
+  const ev = JSON.parse(f.calls.find((c) => c.url.endsWith("/nj_events")).opt.body);
+  assert.equal(ev.length, 1); assert.equal(ev[0].restaurant_id, "cafe-1a2b");   // spoofed restaurant_id is ignored
+});
+
+test("pairing: wrong or missing code is refused, nothing is written, and guessing is rate limited", async () => {
+  const { f, h } = pairHandler();
+  for (const body of [{ id: "cafe-1a2b", code: "AAAA-AAAA-AAAA", state: STATE }, { id: "cafe-1a2b", state: STATE }, { id: "../x", code: "x" }]) {
+    const r = await call(h, { method: "POST", url: "/api?op=d_push", body });
+    assert.equal(r.status, 401);
+  }
+  assert.equal(f.calls.some((c) => /nj_state|nj_events/.test(c.url) && c.opt.method === "POST"), false);
+  assert.equal((await call(h, { url: "/api?op=d_push" })).status, 405);
+  let last; for (let i = 0; i < 12; i++) last = await call(h, { method: "POST", url: "/api?op=d_register", body: { id: "cafe-1a2b", code: "BAD" + i } });
+  assert.equal(last.status, 429);
+});
+
+test("pairing: a manager cannot read another restaurant's code, and renewing invalidates the old one", async () => {
+  let ver = 1;
+  const f = fakeFetch([["nj_restaurants", (u, o) => (o.method === "PATCH" ? (ver = JSON.parse(o.body).pair_ver, [204, null]) : [200, [{ id: "cafe-1a2b", name: "Café", pair_ver: ver }]])]]);
+  const h = createHandler({ env: PENV, fetch: f });
+  assert.equal((await call(h, { url: "/api?op=m_pair" })).status, 401);
+  const old = (await call(h, { url: "/api?op=m_pair", cookie: mCookie("cafe-1a2b") })).json.code;
+  const fresh = (await call(h, { method: "POST", url: "/api?op=m_pair_reset", cookie: mCookie("cafe-1a2b") })).json.code;
+  assert.notEqual(old, fresh);
+  assert.equal((await call(h, { method: "POST", url: "/api?op=d_register", body: { id: "cafe-1a2b", code: old } })).status, 401);
+  assert.equal((await call(h, { method: "POST", url: "/api?op=d_register", body: { id: "cafe-1a2b", code: fresh } })).status, 200);
+});
